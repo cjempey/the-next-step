@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     """Application settings."""
 
     # Database
-    DATABASE_URL: str = "postgresql://user:password@localhost/the_next_step"
+    DATABASE_URL: str = "postgresql+psycopg://user:password@localhost/the_next_step"
 
     # API
     API_HOST: str = "0.0.0.0"

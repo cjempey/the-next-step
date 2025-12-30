@@ -17,6 +17,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.core.database import Base
 from app.config import settings
 
+# Import all models so they're registered with Base.metadata
+from app.models import Task, Value, RejectionDampening, DailyPriority, ReviewHistory
+
 config = context.config
 
 # Set SQLAlchemy URL
