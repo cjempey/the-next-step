@@ -5,8 +5,8 @@ export default function App() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>The Next Step</Text>
-      <Text style={styles.subtitle}>What Next? | Context Recovery</Text>
-      {/* TODO: Implement navigation and screens */}
+      <Text style={styles.subtitle}>Mobile App</Text>
+      <Text style={styles.description}>Screens coming soon...</Text>
     </View>
   )
 }
@@ -17,14 +17,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: '#333',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#666',
+    marginBottom: 20,
+  },
+  description: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
   },
 })
