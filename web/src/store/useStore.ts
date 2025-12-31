@@ -4,7 +4,7 @@ interface Task {
   id: number
   title: string
   description?: string
-  importance: string
+  impact: string
   urgency: number
   state: string
   completion_percentage?: number

@@ -193,7 +193,7 @@ the-next-step/
 2. Backend API
    └─ Queries database for Ready tasks
    └─ Applies weighting algorithm:
-      - Importance weight
+      - impact weight
       - Urgency weight
       - Strategic nudge (A3/A4)
       - Rejection dampening
@@ -278,12 +278,12 @@ the-next-step/
 ```python
 def calculate_task_score(task):
     base_score = (
-        (importance_weight[task.importance] * IMPORTANCE_MULTIPLIER) +
+        (impact_weight[task.impact] * impact_MULTIPLIER) +
         (urgency_weight[task.urgency] * URGENCY_MULTIPLIER)
     )
     
     # Strategic nudge for important-but-not-urgent tasks
-    if task.importance == 'A' and task.urgency >= 3:
+    if task.impact == 'A' and task.urgency >= 3:
         base_score += STRATEGIC_NUDGE_BOOST
     
     # Apply rejection dampening

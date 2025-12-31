@@ -8,8 +8,8 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
-class ImportanceEnum(str, Enum):
-    """Task importance levels."""
+class ImpactEnum(str, Enum):
+    """Task impact levels."""
 
     A = "A"
     B = "B"
@@ -52,7 +52,7 @@ class TaskCreate(BaseModel):
     title: str
     description: Optional[str] = None
     value_ids: list[int] = Field(default_factory=list)
-    importance: Optional[ImportanceEnum] = None
+    impact: Optional[ImpactEnum] = None
     urgency: Optional[UrgencyEnum] = None
     due_date: Optional[datetime] = None
     recurrence: RecurrenceEnum = RecurrenceEnum.NONE
@@ -63,7 +63,7 @@ class TaskUpdate(BaseModel):
 
     title: Optional[str] = None
     description: Optional[str] = None
-    importance: Optional[ImportanceEnum] = None
+    impact: Optional[ImpactEnum] = None
     urgency: Optional[UrgencyEnum] = None
     state: Optional[TaskStateEnum] = None
     due_date: Optional[datetime] = None
@@ -78,7 +78,7 @@ class TaskResponse(BaseModel):
     title: str
     description: Optional[str]
     value_ids: list[int]
-    importance: ImportanceEnum
+    impact: ImpactEnum
     urgency: UrgencyEnum
     state: TaskStateEnum
     due_date: Optional[datetime]

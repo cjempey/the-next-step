@@ -56,7 +56,7 @@ Support neurodivergent adults (primarily autistic and ADHD individuals) in **exe
 
 - **Title:** Short phrase (e.g., "Water the plants")
 - **Value(s):** Link to one or more user-defined values
-- **Importance:** A, B, C, or D (user-assigned, with AI suggestions)
+- **Impact:** A, B, C, or D (user-assigned, with AI suggestions)
 - **Urgency:** 1–4 (user-assigned, with AI suggestions)
 - **Due Date:** Optional date when task should be completed
 - **Recurrence:** None, daily, weekly, or custom pattern
@@ -102,7 +102,7 @@ Support neurodivergent adults (primarily autistic and ADHD individuals) in **exe
 
 - Tasks link to one or more values
 - During evening review, metrics are shown per value: "You completed 3 tasks aligned with [Value]"
-- Values provide context for task importance assessment
+- Values provide context for task impact assessment
 
 ### 4.3 Value Lifecycle
 
@@ -113,16 +113,16 @@ Support neurodivergent adults (primarily autistic and ADHD individuals) in **exe
 
 ---
 
-## 5. Importance & Urgency
+## 5. Impact & Urgency
 
-### 5.1 Importance Categories
+### 5.1 Impact Categories
 
 - **A:** Directly advance values/goals
 - **B:** Moderately aligned with values
 - **C:** Minor alignment
 - **D:** Little or no impact on values
 
-AI may suggest importance based on task title and linked values; user retains final authority.
+AI may suggest impact based on task title and linked values; user retains final authority.
 
 ### 5.2 Urgency Categories
 
@@ -135,7 +135,7 @@ AI may suggest urgency based on due date and task description; user retains fina
 
 ### 5.3 Strategic Nudge
 
-- Tasks that are A-importance but low-urgency (A3/A4) receive a **probabilistic boost** during suggestion
+- Tasks that are A-impact but low-urgency (A3/A4) receive a **probabilistic boost** during suggestion
 - Prevents urgency bias from completely drowning out important-but-not-urgent work
 - Boost is subtle and non-deterministic; never forces selection
 
@@ -149,7 +149,7 @@ AI may suggest urgency based on due date and task description; user retains fina
 
 **Process:**
 1. User enters task title
-2. System prompts for: Value(s), Importance (with AI suggestion), Urgency (with AI suggestion), Due date (optional), Recurrence (optional)
+2. System prompts for: Value(s), impact (with AI suggestion), Urgency (with AI suggestion), Due date (optional), Recurrence (optional)
 3. User saves task
 4. Task created in Ready state
 
@@ -212,8 +212,8 @@ AI may suggest urgency based on due date and task description; user retains fina
 - Scores displayed as ranked list, not numeric values
 - Tooltip/expandable shows scoring breakdown:
   - "Why is this ranked here?"
-  - Input factors: Importance, Urgency, Due date proximity, Recurrence, Strategic nudge status
-  - Human-readable explanation (e.g., "A-importance + due in 2 days")
+  - Input factors: impact, Urgency, Due date proximity, Recurrence, Strategic nudge status
+  - Human-readable explanation (e.g., "A-impact + due in 2 days")
 - Goal: Transparency into system reasoning without gamification
 
 **Selection Constraints:**
@@ -246,7 +246,7 @@ AI may suggest urgency based on due date and task description; user retains fina
    - Include: All Ready tasks + optionally In-Progress tasks (for context)
    - Exclude: Completed, Blocked, Parked, Cancelled
    - Apply weighting factors:
-     - **Base Score** = (Importance × weight_i) + (Urgency × weight_u) + (Strategic Nudge × weight_s)
+     - **Base Score** = (impact × weight_i) + (Urgency × weight_u) + (Strategic Nudge × weight_s)
      - **Daily Priority Boost** = +multiplier if task in "Today's Priorities" (or +1.0x if not)
      - **Rejection Dampening** = ÷ dampening_factor if rejected in current session
    - Normalize scores to probabilities (roulette wheel distribution, not deterministic max)
@@ -257,7 +257,7 @@ AI may suggest urgency based on due date and task description; user retains fina
 
 4. **Present Candidate**
    - Neutral framing: "How about working on [Task Name]?"
-   - Show: Task title, linked values, importance/urgency
+   - Show: Task title, linked values, impact/urgency
    - Options: "I'll start this now" / "Not now, suggest another" / "I'll take a break"
 
 5. **User Responses**
@@ -448,7 +448,7 @@ System generates applicable **review cards** based on day's activity. Each card 
 ### 7.1 Weighted Score Calculation
 
 ```
-Base Score = (Importance_weight × Importance_value) + 
+Base Score = (impact_weight × impact_value) + 
              (Urgency_weight × Urgency_value) + 
              (Strategic_Nudge_boost if A3 or A4, else 0)
 
@@ -460,9 +460,9 @@ Final Score = With Daily Priority
 ```
 
 **Configurable Parameters:**
-- `Importance_weight` = 2.0 (default; A=4, B=3, C=2, D=1; multiply by weight)
+- `impact_weight` = 2.0 (default; A=4, B=3, C=2, D=1; multiply by weight)
 - `Urgency_weight` = 1.5 (default; 1=4, 2=3, 3=2, 4=1; multiply by weight)
-- `Strategic_Nudge_boost` = 1.5 (default; multiply base score if Importance=A AND Urgency>=3)
+- `Strategic_Nudge_boost` = 1.5 (default; multiply base score if impact=A AND Urgency>=3)
 - `Dampening_factor` = 0.5 (default; reject reduces score to 67% of original)
 - `Priority_multiplier` = 2.0 (default; selected in morning planning gets 2x boost)
 
@@ -482,10 +482,10 @@ Final Score = With Daily Priority
 
 ### 7.3 Strategic Nudge Rationale
 
-- A-importance tasks often deprioritized due to no due date (no urgency pressure)
+- A-impact tasks often deprioritized due to no due date (no urgency pressure)
 - Strategic nudge probabilistically surfaces these to prevent value misalignment
 - Boost is subtle and randomized; never enforces task selection
-- Only applies to A-importance + Urgency 3 or 4
+- Only applies to A-impact + Urgency 3 or 4
 
 ---
 
@@ -540,7 +540,7 @@ Final Score = With Daily Priority
   title: string,
   description: string (optional),
   values: [value_id, ...],
-  importance: A | B | C | D,
+  impact: A | B | C | D,
   urgency: 1 | 2 | 3 | 4,
   due_date: ISO8601 (optional),
   recurrence: none | daily | weekly | custom (optional),
@@ -587,7 +587,7 @@ Final Score = With Daily Priority
 | Task creation/edit | ✅ | Short phrases, user-defined |
 | Values entry/edit | ✅ | No hard limits |
 | Task states (6-state model) | ✅ | Ready/In Progress/Blocked/Parked/Completed/Cancelled |
-| Importance/Urgency assignment | ✅ | AI suggestions, user final authority |
+| impact/Urgency assignment | ✅ | AI suggestions, user final authority |
 | Strategic nudge (A3/A4) | ✅ | Probabilistic weighting |
 | Recurring tasks with auto-creation | ✅ | Daily/weekly + custom |
 | Morning planning with priorities | ✅ | Ranking, drag-drop (web), checkboxes (mobile) |
@@ -612,7 +612,7 @@ Final Score = With Daily Priority
 
 The MVP is considered successful if:
 
-1. ✅ Users can create/edit tasks with title, values, importance, urgency, due date, recurrence
+1. ✅ Users can create/edit tasks with title, values, impact, urgency, due date, recurrence
 2. ✅ Users can define and manage values
 3. ✅ Task states are accurately tracked and transition as specified
 4. ✅ Morning planning displays all 4 sections with correct task filtering
@@ -642,7 +642,7 @@ All weighting factors should be configurable (not hardcoded) to allow tuning:
 
 ```yaml
 scoring_weights:
-  importance: 2.0
+  impact: 2.0
   urgency: 1.5
   strategic_nudge_boost: 1.5
   dampening_factor: 0.5
