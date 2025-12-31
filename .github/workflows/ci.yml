@@ -41,15 +41,15 @@ jobs:
         working-directory: backend
         run: uv sync --all-groups
       
-      - name: Run linting
+      - name: Run linting & formatting
         working-directory: backend
         run: |
-          uv run ruff check app/ tests/
-          uv run black --check app/ tests/
+          uv run ruff check --fix app/ tests/
+          uv run ruff format app/ tests/
       
       - name: Run type checking
         working-directory: backend
-        run: uv run mypy app/
+        run: uv run pyright app/
       
       - name: Run tests
         working-directory: backend
