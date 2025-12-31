@@ -44,8 +44,8 @@ jobs:
       - name: Run linting & formatting
         working-directory: backend
         run: |
-          uv run ruff check --fix app/ tests/
-          uv run ruff format app/ tests/
+          uv run ruff check app/ tests/
+          uv run ruff format --check app/ tests/
       
       - name: Run type checking
         working-directory: backend
