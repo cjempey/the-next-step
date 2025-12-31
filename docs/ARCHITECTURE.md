@@ -278,7 +278,7 @@ the-next-step/
 ```python
 def calculate_task_score(task):
     base_score = (
-        (impact_weight[task.impact] * impact_MULTIPLIER) +
+        (impact_weight[task.impact] * IMPACT_MULTIPLIER) +
         (urgency_weight[task.urgency] * URGENCY_MULTIPLIER)
     )
     
