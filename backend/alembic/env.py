@@ -18,6 +18,13 @@ from app.core.database import Base
 from app.config import settings
 
 # Import all models so they're registered with Base.metadata
+from app.models import (  # noqa: F401
+    Task,
+    Value,
+    RejectionDampening,
+    DailyPriority,
+    ReviewHistory,
+)
 
 config = context.config
 
