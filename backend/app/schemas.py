@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 
 class ImportanceEnum(str, Enum):
     """Task importance levels."""
+
     A = "A"
     B = "B"
     C = "C"
@@ -18,6 +19,7 @@ class ImportanceEnum(str, Enum):
 
 class UrgencyEnum(int, Enum):
     """Task urgency levels."""
+
     IMMEDIATE = 1
     SOON = 2
     CAN_DEFER = 3
@@ -26,6 +28,7 @@ class UrgencyEnum(int, Enum):
 
 class TaskStateEnum(str, Enum):
     """Task states."""
+
     READY = "Ready"
     IN_PROGRESS = "In Progress"
     BLOCKED = "Blocked"
@@ -36,6 +39,7 @@ class TaskStateEnum(str, Enum):
 
 class RecurrenceEnum(str, Enum):
     """Recurrence patterns."""
+
     NONE = "none"
     DAILY = "daily"
     WEEKLY = "weekly"
@@ -44,6 +48,7 @@ class RecurrenceEnum(str, Enum):
 # Task schemas
 class TaskCreate(BaseModel):
     """Create task request."""
+
     title: str
     description: Optional[str] = None
     value_ids: list[int] = Field(default_factory=list)
@@ -55,6 +60,7 @@ class TaskCreate(BaseModel):
 
 class TaskUpdate(BaseModel):
     """Update task request."""
+
     title: Optional[str] = None
     description: Optional[str] = None
     importance: Optional[ImportanceEnum] = None
@@ -67,6 +73,7 @@ class TaskUpdate(BaseModel):
 
 class TaskResponse(BaseModel):
     """Task response."""
+
     id: int
     title: str
     description: Optional[str]
@@ -87,11 +94,13 @@ class TaskResponse(BaseModel):
 # Value schemas
 class ValueCreate(BaseModel):
     """Create value request."""
+
     statement: str
 
 
 class ValueResponse(BaseModel):
     """Value response."""
+
     id: int
     statement: str
     archived: bool
@@ -104,11 +113,13 @@ class ValueResponse(BaseModel):
 # Suggestion schemas
 class SuggestionRequest(BaseModel):
     """Request for next task suggestion."""
+
     include_in_progress: bool = False
 
 
 class SuggestionResponse(BaseModel):
     """Single task suggestion."""
+
     task: TaskResponse
     reason: str  # Human-readable explanation
 
@@ -116,11 +127,13 @@ class SuggestionResponse(BaseModel):
 # Review schemas
 class ReviewCardsRequest(BaseModel):
     """Request to generate review cards."""
+
     pass
 
 
 class ReviewCard(BaseModel):
     """Generic review card."""
+
     id: str
     card_type: str  # "completion", "rejection", "in_progress", "blocked", "recurring"
     content: str

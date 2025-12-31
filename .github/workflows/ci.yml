@@ -39,31 +39,23 @@ jobs:
       
       - name: Install dependencies
         working-directory: backend
-        run: |
-          uv venv
-          uv pip install -r requirements.txt
-          uv pip install -e ".[dev]"
+        run: uv sync --all-groups
       
-      - name: Run linting
+      - name: Run linting & formatting
         working-directory: backend
         run: |
-          source .venv/bin/activate
-          ruff check app/ tests/
-          black --check app/ tests/
+          uv run ruff check app/ tests/
+          uv run ruff format --check app/ tests/
       
       - name: Run type checking
         working-directory: backend
-        run: |
-          source .venv/bin/activate
-          mypy app/
+        run: uv run pyright app/
       
       - name: Run tests
         working-directory: backend
         env:
           DATABASE_URL: postgresql://testuser:testpass@localhost:5432/test_db
-        run: |
-          source .venv/bin/activate
-          pytest -v
+        run: uv run pytest -v
 
   web:
     name: Web Frontend Tests

@@ -35,7 +35,9 @@ def create_app() -> FastAPI:
     app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
     app.include_router(values.router, prefix="/api/values", tags=["values"])
     app.include_router(reviews.router, prefix="/api/reviews", tags=["reviews"])
-    app.include_router(suggestions.router, prefix="/api/suggestions", tags=["suggestions"])
+    app.include_router(
+        suggestions.router, prefix="/api/suggestions", tags=["suggestions"]
+    )
 
     return app
 

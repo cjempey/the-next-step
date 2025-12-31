@@ -12,7 +12,9 @@ router = APIRouter()
 
 
 @router.post("/next", response_model=SuggestionResponse)
-async def get_next_suggestion(request: SuggestionRequest, db: Session = Depends(get_db)):
+async def get_next_suggestion(
+    request: SuggestionRequest, db: Session = Depends(get_db)
+):
     """Get the next task suggestion using fuzzy weighting algorithm."""
     # TODO: Implement scoring algorithm and stochastic selection
     pass
