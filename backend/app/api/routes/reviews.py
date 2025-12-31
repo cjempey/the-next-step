@@ -12,7 +12,9 @@ router = APIRouter()
 
 
 @router.post("/cards", response_model=list[ReviewCard])
-async def generate_review_cards(request: ReviewCardsRequest, db: Session = Depends(get_db)):
+async def generate_review_cards(
+    request: ReviewCardsRequest, db: Session = Depends(get_db)
+):
     """Generate review cards for evening review based on day's activity."""
     # TODO: Implement card generation logic:
     # - Completion summary
@@ -24,7 +26,9 @@ async def generate_review_cards(request: ReviewCardsRequest, db: Session = Depen
 
 
 @router.post("/cards/{card_id}/respond")
-async def respond_to_card(card_id: str, response_option: str, db: Session = Depends(get_db)):
+async def respond_to_card(
+    card_id: str, response_option: str, db: Session = Depends(get_db)
+):
     """Process user response to a review card."""
     # TODO: Implement response handlers for each card type
     # Each handler updates task state, creates new tasks (for breakdown), etc.

@@ -26,7 +26,9 @@ async def create_value(value: ValueCreate, db: Session = Depends(get_db)):
 
 
 @router.put("/{value_id}", response_model=ValueResponse)
-async def update_value(value_id: int, value: ValueCreate, db: Session = Depends(get_db)):
+async def update_value(
+    value_id: int, value: ValueCreate, db: Session = Depends(get_db)
+):
     """Update a value."""
     # TODO: Implement
     pass
