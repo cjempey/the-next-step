@@ -31,6 +31,10 @@ class Settings(BaseSettings):
         "http://localhost:8081",  # React Native dev
     ]
 
+    # JWT Authentication
+    JWT_SECRET_KEY: str = "your-secret-key-change-in-production"
+    JWT_EXPIRATION_DAYS: int = 30
+
     # OpenAI (optional)
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4"

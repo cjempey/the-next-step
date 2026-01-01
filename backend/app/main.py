@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import tasks, values, reviews, suggestions
+from app.api.routes import auth as auth_routes
 from app.config import settings
 
 
@@ -32,6 +33,7 @@ def create_app() -> FastAPI:
         return {"status": "ok"}
 
     # Include routers
+    app.include_router(auth_routes.router, prefix="/api/auth", tags=["auth"])
     app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
     app.include_router(values.router, prefix="/api/values", tags=["values"])
     app.include_router(reviews.router, prefix="/api/reviews", tags=["reviews"])

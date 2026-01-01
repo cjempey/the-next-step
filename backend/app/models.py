@@ -83,6 +83,7 @@ class Task(Base):
     __tablename__ = "tasks"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     impact = Column(Enum(ImpactEnum), nullable=False, default=ImpactEnum.B)
@@ -108,6 +109,7 @@ class Task(Base):
         "Value", secondary=task_value_association, back_populates="tasks"
     )
     parent_task = relationship("Task", remote_side=[id], backref="recurrence_instances")
+    user = relationship("User", backref="tasks")
 
 
 class Value(Base):
@@ -116,6 +118,7 @@ class Value(Base):
     __tablename__ = "values"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     statement = Column(String(255), nullable=False)
     archived = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
@@ -127,6 +130,7 @@ class Value(Base):
     tasks = relationship(
         "Task", secondary=task_value_association, back_populates="values"
     )
+    user = relationship("User", backref="values")
 
 
 class RejectionDampening(Base):
@@ -135,6 +139,7 @@ class RejectionDampening(Base):
     __tablename__ = "rejection_dampening"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False)
     rejected_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     expires_at = Column(String(50), nullable=False)  # "next_break" or "next_review"
@@ -146,6 +151,7 @@ class DailyPriority(Base):
     __tablename__ = "daily_priorities"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False)
     priority_date = Column(
         DateTime, nullable=False
@@ -159,6 +165,7 @@ class ReviewHistory(Base):
     __tablename__ = "review_history"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False)
     review_date = Column(DateTime, nullable=False, default=datetime.utcnow)
     action = Column(
@@ -173,8 +180,25 @@ class ReviewCard(Base):
     __tablename__ = "review_cards"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     type = Column(Enum(ReviewCardTypeEnum), nullable=False)
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=True)
     content = Column(Text, nullable=False)
     responses = Column(JSON, nullable=False)  # Array of {option: str, action: str}
     generated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+
+class User(Base):
+    """User model for authentication."""
+
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(50), unique=True, nullable=False, index=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(
+        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
