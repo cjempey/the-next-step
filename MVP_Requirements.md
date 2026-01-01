@@ -149,7 +149,7 @@ AI may suggest urgency based on due date and task description; user retains fina
 
 **Process:**
 1. User enters task title
-2. System prompts for: Value(s), impact (with AI suggestion), Urgency (with AI suggestion), Due date (optional), Recurrence (optional)
+2. System prompts for: Value(s), Impact (with AI suggestion), Urgency (with AI suggestion), Due date (optional), Recurrence (optional)
 3. User saves task
 4. Task created in Ready state
 
@@ -212,7 +212,7 @@ AI may suggest urgency based on due date and task description; user retains fina
 - Scores displayed as ranked list, not numeric values
 - Tooltip/expandable shows scoring breakdown:
   - "Why is this ranked here?"
-  - Input factors: impact, Urgency, Due date proximity, Recurrence, Strategic nudge status
+  - Input factors: Impact, Urgency, Due date proximity, Recurrence, Strategic nudge status
   - Human-readable explanation (e.g., "A-impact + due in 2 days")
 - Goal: Transparency into system reasoning without gamification
 
@@ -257,7 +257,7 @@ AI may suggest urgency based on due date and task description; user retains fina
 
 4. **Present Candidate**
    - Neutral framing: "How about working on [Task Name]?"
-   - Show: Task title, linked values, impact/urgency
+   - Show: Task title, linked values, Impact/Urgency
    - Options: "I'll start this now" / "Not now, suggest another" / "I'll take a break"
 
 5. **User Responses**
@@ -587,7 +587,7 @@ Final Score = With Daily Priority
 | Task creation/edit | ✅ | Short phrases, user-defined |
 | Values entry/edit | ✅ | No hard limits |
 | Task states (6-state model) | ✅ | Ready/In Progress/Blocked/Parked/Completed/Cancelled |
-| impact/Urgency assignment | ✅ | AI suggestions, user final authority |
+| Impact/Urgency assignment | ✅ | AI suggestions, user final authority |
 | Strategic nudge (A3/A4) | ✅ | Probabilistic weighting |
 | Recurring tasks with auto-creation | ✅ | Daily/weekly + custom |
 | Morning planning with priorities | ✅ | Ranking, drag-drop (web), checkboxes (mobile) |
@@ -612,7 +612,7 @@ Final Score = With Daily Priority
 
 The MVP is considered successful if:
 
-1. ✅ Users can create/edit tasks with title, values, impact, urgency, due date, recurrence
+1. ✅ Users can create/edit tasks with title, values, Impact, urgency, due date, recurrence
 2. ✅ Users can define and manage values
 3. ✅ Task states are accurately tracked and transition as specified
 4. ✅ Morning planning displays all 4 sections with correct task filtering
