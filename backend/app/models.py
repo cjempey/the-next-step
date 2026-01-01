@@ -13,6 +13,7 @@ from sqlalchemy import (
     ForeignKey,
     Table,
     Enum,
+    JSON,
 )
 from sqlalchemy.orm import relationship
 import enum
@@ -55,6 +56,16 @@ class RecurrenceEnum(str, enum.Enum):
     NONE = "none"
     DAILY = "daily"
     WEEKLY = "weekly"
+
+
+class ReviewCardTypeEnum(str, enum.Enum):
+    """Review card types."""
+
+    COMPLETION = "completion"
+    REJECTION = "rejection"
+    IN_PROGRESS = "in_progress"
+    BLOCKED = "blocked"
+    RECURRING = "recurring"
 
 
 # Association table for tasks and values
@@ -154,3 +165,16 @@ class ReviewHistory(Base):
         String(50), nullable=False
     )  # "completed", "blocked", "parked", etc.
     notes = Column(Text, nullable=True)
+
+
+class ReviewCard(Base):
+    """Review card for evening review flow (v2 feature)."""
+
+    __tablename__ = "review_cards"
+
+    id = Column(Integer, primary_key=True, index=True)
+    type = Column(Enum(ReviewCardTypeEnum), nullable=False)
+    task_id = Column(Integer, ForeignKey("tasks.id"), nullable=True)
+    content = Column(Text, nullable=False)
+    responses = Column(JSON, nullable=False)  # Array of {option: str, action: str}
+    generated_at = Column(DateTime, nullable=False, default=datetime.utcnow)

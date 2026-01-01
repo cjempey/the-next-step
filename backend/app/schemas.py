@@ -45,6 +45,16 @@ class RecurrenceEnum(str, Enum):
     WEEKLY = "weekly"
 
 
+class ReviewCardTypeEnum(str, Enum):
+    """Review card types."""
+
+    COMPLETION = "completion"
+    REJECTION = "rejection"
+    IN_PROGRESS = "in_progress"
+    BLOCKED = "blocked"
+    RECURRING = "recurring"
+
+
 # Task schemas
 class TaskCreate(BaseModel):
     """Create task request."""
@@ -131,8 +141,22 @@ class ReviewCardsRequest(BaseModel):
     pass
 
 
+class ReviewCardResponse(BaseModel):
+    """Review card response."""
+
+    id: int
+    type: ReviewCardTypeEnum
+    task_id: Optional[int]
+    content: str
+    responses: list[dict]  # [{"option": "str", "action": "handler_key"}, ...]
+    generated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 class ReviewCard(BaseModel):
-    """Generic review card."""
+    """Generic review card (legacy, for backward compatibility)."""
 
     id: str
     card_type: str  # "completion", "rejection", "in_progress", "blocked", "recurring"

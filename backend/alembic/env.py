@@ -24,6 +24,7 @@ from app.models import (  # noqa: F401
     RejectionDampening,
     DailyPriority,
     ReviewHistory,
+    ReviewCard,
 )
 
 config = context.config
