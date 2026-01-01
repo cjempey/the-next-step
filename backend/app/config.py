@@ -11,6 +11,14 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "postgresql+psycopg://user:password@localhost/the_next_step"
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Ensure DATABASE_URL uses psycopg driver for psycopg3 compatibility
+        if self.DATABASE_URL.startswith("postgresql://"):
+            self.DATABASE_URL = self.DATABASE_URL.replace(
+                "postgresql://", "postgresql+psycopg://", 1
+            )
+
     # API
     API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000
