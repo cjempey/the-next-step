@@ -238,7 +238,7 @@ Example test:
 ```python
 # tests/test_scoring.py
 def test_scoring_algorithm():
-    task = Task(importance='A', urgency=3)
+    task = Task(impact='A', urgency=3)
     score = calculate_task_score(task)
     assert score > 0
 ```

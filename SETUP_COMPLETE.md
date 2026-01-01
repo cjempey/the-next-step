@@ -157,14 +157,14 @@ Based on the MVP Requirements, here's a logical build order:
 
 1. **Backend Task CRUD** (`POST /tasks`, `GET /tasks`, `PUT /tasks/{id}`)
 2. **Backend Values CRUD** (`POST /values`, `GET /values`)
-3. **Web: Task Entry UI** (form to create tasks with values/importance/urgency)
+3. **Web: Task Entry UI** (form to create tasks with values/impact/urgency)
 4. **Web: Morning Planning UI** (display tasks, ranking, drag-drop selection)
 5. **Backend: Scoring Algorithm** (weighting, fuzzy selection)
 6. **Backend: "What Next?" Endpoint** (`POST /suggestions/next`)
 7. **Mobile: "What Next?" UI** (single suggestion with 3 buttons)
 8. **Backend: Review Cards Generation** (card logic for each type)
 9. **Web: Evening Review UI** (display cards, process responses)
-10. **Backend: AI Suggestions** (OpenAI integration for importance/urgency)
+10. **Backend: AI Suggestions** (OpenAI integration for impact/urgency)
 
 ---
 

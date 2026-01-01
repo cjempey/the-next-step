@@ -20,9 +20,9 @@ async def get_next_suggestion(
     pass
 
 
-@router.post("/suggest-importance")
-async def suggest_importance(task_title: str, db: Session = Depends(get_db)):
-    """Use AI to suggest task importance based on title and values."""
+@router.post("/suggest-impact")
+async def suggest_impact(task_title: str, db: Session = Depends(get_db)):
+    """Use AI to suggest task impact based on title and values."""
     # TODO: Implement OpenAI integration
     pass
 

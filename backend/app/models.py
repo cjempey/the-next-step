@@ -20,8 +20,8 @@ import enum
 from app.core.database import Base
 
 
-class ImportanceEnum(str, enum.Enum):
-    """Task importance levels."""
+class ImpactEnum(str, enum.Enum):
+    """Task impact levels."""
 
     A = "A"
     B = "B"
@@ -74,7 +74,7 @@ class Task(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
-    importance = Column(Enum(ImportanceEnum), nullable=False, default=ImportanceEnum.B)
+    impact = Column(Enum(ImpactEnum), nullable=False, default=ImpactEnum.B)
     urgency = Column(Enum(UrgencyEnum), nullable=False, default=UrgencyEnum.CAN_DEFER)
     state = Column(Enum(TaskStateEnum), nullable=False, default=TaskStateEnum.READY)
     due_date = Column(DateTime, nullable=True)

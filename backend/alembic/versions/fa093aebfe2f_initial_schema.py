@@ -24,7 +24,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('title', sa.String(length=255), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
-    sa.Column('importance', sa.Enum('A', 'B', 'C', 'D', name='importanceenum'), nullable=False),
+    sa.Column('impact', sa.Enum('A', 'B', 'C', 'D', name='impactenum'), nullable=False),
     sa.Column('urgency', sa.Enum('IMMEDIATE', 'SOON', 'CAN_DEFER', 'LONGTERM', name='urgencyenum'), nullable=False),
     sa.Column('state', sa.Enum('READY', 'IN_PROGRESS', 'BLOCKED', 'PARKED', 'COMPLETED', 'CANCELLED', name='taskstateenum'), nullable=False),
     sa.Column('due_date', sa.DateTime(), nullable=True),
