@@ -57,10 +57,9 @@ def cleanup_database():
 def test_create_value():
     """Test creating a new value."""
     response = client.post(
-        "/api/values/",
-        json={"statement": "I am improving in my craft"}
+        "/api/values/", json={"statement": "I am improving in my craft"}
     )
-    
+
     assert response.status_code == 201
     data = response.json()
     assert data["statement"] == "I am improving in my craft"
@@ -72,10 +71,9 @@ def test_create_value():
 def test_create_value_with_whitespace():
     """Test creating a value strips whitespace."""
     response = client.post(
-        "/api/values/",
-        json={"statement": "  My family comes first  "}
+        "/api/values/", json={"statement": "  My family comes first  "}
     )
-    
+
     assert response.status_code == 201
     data = response.json()
     assert data["statement"] == "My family comes first"
@@ -83,22 +81,16 @@ def test_create_value_with_whitespace():
 
 def test_create_value_empty_string():
     """Test creating a value with empty string fails."""
-    response = client.post(
-        "/api/values/",
-        json={"statement": ""}
-    )
-    
+    response = client.post("/api/values/", json={"statement": ""})
+
     assert response.status_code == 400
     assert response.json()["detail"] == "Value statement cannot be empty"
 
 
 def test_create_value_only_whitespace():
     """Test creating a value with only whitespace fails."""
-    response = client.post(
-        "/api/values/",
-        json={"statement": "   "}
-    )
-    
+    response = client.post("/api/values/", json={"statement": "   "})
+
     assert response.status_code == 400
     assert response.json()["detail"] == "Value statement cannot be empty"
 
@@ -106,7 +98,7 @@ def test_create_value_only_whitespace():
 def test_list_values_empty():
     """Test listing values when none exist."""
     response = client.get("/api/values/")
-    
+
     assert response.status_code == 200
     assert response.json() == []
 
@@ -117,9 +109,9 @@ def test_list_values():
     client.post("/api/values/", json={"statement": "Value 1"})
     client.post("/api/values/", json={"statement": "Value 2"})
     client.post("/api/values/", json={"statement": "Value 3"})
-    
+
     response = client.get("/api/values/")
-    
+
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 3
@@ -133,16 +125,16 @@ def test_list_values_excludes_archived():
     # Create values
     response1 = client.post("/api/values/", json={"statement": "Active Value"})
     value1_id = response1.json()["id"]
-    
+
     response2 = client.post("/api/values/", json={"statement": "Archived Value"})
     value2_id = response2.json()["id"]
-    
+
     # Archive the second value
     client.patch(f"/api/values/{value2_id}/archive")
-    
+
     # List values
     response = client.get("/api/values/")
-    
+
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
@@ -154,17 +146,15 @@ def test_update_value():
     """Test updating a value statement."""
     # Create a value
     create_response = client.post(
-        "/api/values/",
-        json={"statement": "Original statement"}
+        "/api/values/", json={"statement": "Original statement"}
     )
     value_id = create_response.json()["id"]
-    
+
     # Update the value
     update_response = client.put(
-        f"/api/values/{value_id}",
-        json={"statement": "Updated statement"}
+        f"/api/values/{value_id}", json={"statement": "Updated statement"}
     )
-    
+
     assert update_response.status_code == 200
     data = update_response.json()
     assert data["id"] == value_id
@@ -175,18 +165,14 @@ def test_update_value():
 def test_update_value_with_whitespace():
     """Test updating a value strips whitespace."""
     # Create a value
-    create_response = client.post(
-        "/api/values/",
-        json={"statement": "Original"}
-    )
+    create_response = client.post("/api/values/", json={"statement": "Original"})
     value_id = create_response.json()["id"]
-    
+
     # Update with whitespace
     update_response = client.put(
-        f"/api/values/{value_id}",
-        json={"statement": "  Updated  "}
+        f"/api/values/{value_id}", json={"statement": "  Updated  "}
     )
-    
+
     assert update_response.status_code == 200
     assert update_response.json()["statement"] == "Updated"
 
@@ -194,18 +180,12 @@ def test_update_value_with_whitespace():
 def test_update_value_empty_string():
     """Test updating a value with empty string fails."""
     # Create a value
-    create_response = client.post(
-        "/api/values/",
-        json={"statement": "Original"}
-    )
+    create_response = client.post("/api/values/", json={"statement": "Original"})
     value_id = create_response.json()["id"]
-    
+
     # Try to update with empty string
-    update_response = client.put(
-        f"/api/values/{value_id}",
-        json={"statement": ""}
-    )
-    
+    update_response = client.put(f"/api/values/{value_id}", json={"statement": ""})
+
     assert update_response.status_code == 400
     assert update_response.json()["detail"] == "Value statement cannot be empty"
 
@@ -213,29 +193,20 @@ def test_update_value_empty_string():
 def test_update_value_only_whitespace():
     """Test updating a value with only whitespace fails."""
     # Create a value
-    create_response = client.post(
-        "/api/values/",
-        json={"statement": "Original"}
-    )
+    create_response = client.post("/api/values/", json={"statement": "Original"})
     value_id = create_response.json()["id"]
-    
+
     # Try to update with whitespace only
-    update_response = client.put(
-        f"/api/values/{value_id}",
-        json={"statement": "   "}
-    )
-    
+    update_response = client.put(f"/api/values/{value_id}", json={"statement": "   "})
+
     assert update_response.status_code == 400
     assert update_response.json()["detail"] == "Value statement cannot be empty"
 
 
 def test_update_nonexistent_value():
     """Test updating a value that doesn't exist."""
-    response = client.put(
-        "/api/values/999",
-        json={"statement": "New statement"}
-    )
-    
+    response = client.put("/api/values/999", json={"statement": "New statement"})
+
     assert response.status_code == 404
     assert response.json()["detail"] == "Value not found"
 
@@ -243,15 +214,12 @@ def test_update_nonexistent_value():
 def test_archive_value():
     """Test archiving a value."""
     # Create a value
-    create_response = client.post(
-        "/api/values/",
-        json={"statement": "To be archived"}
-    )
+    create_response = client.post("/api/values/", json={"statement": "To be archived"})
     value_id = create_response.json()["id"]
-    
+
     # Archive the value
     archive_response = client.patch(f"/api/values/{value_id}/archive")
-    
+
     assert archive_response.status_code == 200
     data = archive_response.json()
     assert data["id"] == value_id
@@ -262,7 +230,7 @@ def test_archive_value():
 def test_archive_nonexistent_value():
     """Test archiving a value that doesn't exist."""
     response = client.patch("/api/values/999/archive")
-    
+
     assert response.status_code == 404
     assert response.json()["detail"] == "Value not found"
 
@@ -270,40 +238,43 @@ def test_archive_nonexistent_value():
 def test_archive_value_doesnt_affect_tasks():
     """Test that archiving a value doesn't affect existing task-value links."""
     # Create a value
-    value_response = client.post(
-        "/api/values/",
-        json={"statement": "Test Value"}
-    )
+    value_response = client.post("/api/values/", json={"statement": "Test Value"})
     value_id = value_response.json()["id"]
-    
+
     # Create a task linked to this value (using database directly since tasks API may not be implemented)
     db = TestingSessionLocal()
     try:
-        from app.models import Task, ImpactEnum, UrgencyEnum, TaskStateEnum, RecurrenceEnum
-        
+        from app.models import (
+            Task,
+            ImpactEnum,
+            UrgencyEnum,
+            TaskStateEnum,
+            RecurrenceEnum,
+        )
+
         task = Task(
             title="Test Task",
             impact=ImpactEnum.A,
             urgency=UrgencyEnum.IMMEDIATE,
             state=TaskStateEnum.READY,
-            recurrence=RecurrenceEnum.NONE
+            recurrence=RecurrenceEnum.NONE,
         )
         db.add(task)
         db.commit()
         db.refresh(task)
-        
+
         # Link task to value
         value = db.query(Value).filter(Value.id == value_id).first()
         task.values.append(value)
         db.commit()
-        
+
         task_id = task.id
     finally:
         db.close()
-    
+
     # Archive the value
     client.patch(f"/api/values/{value_id}/archive")
-    
+
     # Verify task still has the link
     db = TestingSessionLocal()
     try:
@@ -318,19 +289,15 @@ def test_archive_value_doesnt_affect_tasks():
 def test_archived_value_can_be_updated():
     """Test that archived values can still be updated."""
     # Create and archive a value
-    create_response = client.post(
-        "/api/values/",
-        json={"statement": "Original"}
-    )
+    create_response = client.post("/api/values/", json={"statement": "Original"})
     value_id = create_response.json()["id"]
     client.patch(f"/api/values/{value_id}/archive")
-    
+
     # Update the archived value
     update_response = client.put(
-        f"/api/values/{value_id}",
-        json={"statement": "Updated archived value"}
+        f"/api/values/{value_id}", json={"statement": "Updated archived value"}
     )
-    
+
     assert update_response.status_code == 200
     assert update_response.json()["statement"] == "Updated archived value"
     assert update_response.json()["archived"] is True

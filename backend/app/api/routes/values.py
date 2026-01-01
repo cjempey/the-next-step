@@ -18,12 +18,9 @@ async def create_value(value: ValueCreate, db: Session = Depends(get_db)):
     # Validate that statement is not empty
     if not value.statement or not value.statement.strip():
         raise HTTPException(status_code=400, detail="Value statement cannot be empty")
-    
+
     # Create new value
-    db_value = Value(
-        statement=value.statement.strip(),
-        archived=False
-    )
+    db_value = Value(statement=value.statement.strip(), archived=False)
     db.add(db_value)
     db.commit()
     db.refresh(db_value)
@@ -45,14 +42,14 @@ async def update_value(
     # Validate that statement is not empty
     if not value.statement or not value.statement.strip():
         raise HTTPException(status_code=400, detail="Value statement cannot be empty")
-    
+
     # Find the value
     db_value = db.query(Value).filter(Value.id == value_id).first()
     if not db_value:
         raise HTTPException(status_code=404, detail="Value not found")
-    
+
     # Update the statement
-    db_value.statement = value.statement.strip()
+    db_value.statement = value.statement.strip()  # type: ignore[assignment]
     db.commit()
     db.refresh(db_value)
     return db_value
@@ -65,9 +62,9 @@ async def archive_value(value_id: int, db: Session = Depends(get_db)):
     db_value = db.query(Value).filter(Value.id == value_id).first()
     if not db_value:
         raise HTTPException(status_code=404, detail="Value not found")
-    
+
     # Archive the value
-    db_value.archived = True
+    db_value.archived = True  # type: ignore[assignment]
     db.commit()
     db.refresh(db_value)
     return db_value
