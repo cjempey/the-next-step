@@ -1,11 +1,9 @@
 """Tests for Pydantic schemas."""
 
-import pytest
 from datetime import datetime
 from app.schemas import (
     TaskCreate,
     TaskUpdate,
-    TaskResponse,
     ValueCreate,
     ValueResponse,
     ReviewCardResponse,
@@ -29,7 +27,7 @@ def test_task_create_schema():
         "recurrence": RecurrenceEnum.NONE,
     }
     task = TaskCreate(**task_data)
-    
+
     assert task.title == "Test Task"
     assert task.description == "Test description"
     assert task.value_ids == [1, 2]
@@ -41,7 +39,7 @@ def test_task_create_schema():
 def test_task_create_minimal():
     """Test TaskCreate with minimal required fields."""
     task = TaskCreate(title="Minimal Task")
-    
+
     assert task.title == "Minimal Task"
     assert task.description is None
     assert task.value_ids == []
@@ -58,7 +56,7 @@ def test_task_update_schema():
         "completion_percentage": 50,
     }
     update = TaskUpdate(**update_data)
-    
+
     assert update.title == "Updated Task"
     assert update.state == TaskStateEnum.IN_PROGRESS
     assert update.completion_percentage == 50
@@ -67,7 +65,7 @@ def test_task_update_schema():
 def test_value_create_schema():
     """Test ValueCreate schema."""
     value = ValueCreate(statement="Test Value")
-    
+
     assert value.statement == "Test Value"
 
 
@@ -80,7 +78,7 @@ def test_value_response_schema():
         "created_at": datetime.utcnow(),
     }
     value = ValueResponse(**value_data)
-    
+
     assert value.id == 1
     assert value.statement == "Test Value"
     assert value.archived is False
@@ -97,7 +95,7 @@ def test_review_card_response_schema():
         "generated_at": datetime.utcnow(),
     }
     card = ReviewCardResponse(**card_data)
-    
+
     assert card.id == 1
     assert card.type == ReviewCardTypeEnum.COMPLETION
     assert card.task_id == 123
@@ -117,7 +115,7 @@ def test_review_card_response_nullable_task_id():
         "generated_at": datetime.utcnow(),
     }
     card = ReviewCardResponse(**card_data)
-    
+
     assert card.task_id is None
 
 
@@ -128,13 +126,13 @@ def test_all_enum_values():
     assert ImpactEnum.B
     assert ImpactEnum.C
     assert ImpactEnum.D
-    
+
     # UrgencyEnum
     assert UrgencyEnum.IMMEDIATE
     assert UrgencyEnum.SOON
     assert UrgencyEnum.CAN_DEFER
     assert UrgencyEnum.LONGTERM
-    
+
     # TaskStateEnum
     assert TaskStateEnum.READY
     assert TaskStateEnum.IN_PROGRESS
@@ -142,12 +140,12 @@ def test_all_enum_values():
     assert TaskStateEnum.PARKED
     assert TaskStateEnum.COMPLETED
     assert TaskStateEnum.CANCELLED
-    
+
     # RecurrenceEnum
     assert RecurrenceEnum.NONE
     assert RecurrenceEnum.DAILY
     assert RecurrenceEnum.WEEKLY
-    
+
     # ReviewCardTypeEnum
     assert ReviewCardTypeEnum.COMPLETION
     assert ReviewCardTypeEnum.REJECTION
