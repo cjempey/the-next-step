@@ -95,6 +95,30 @@ def test_create_value_only_whitespace():
     assert response.json()["detail"] == "Value statement cannot be empty"
 
 
+def test_create_value_exceeds_max_length():
+    """Test creating a value with statement exceeding 255 characters fails."""
+    # Create a statement longer than 255 characters
+    long_statement = "A" * 256
+
+    response = client.post("/api/values/", json={"statement": long_statement})
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Value statement must not exceed 255 characters"
+
+
+def test_create_value_at_max_length():
+    """Test creating a value with exactly 255 characters succeeds."""
+    # Create a statement with exactly 255 characters
+    max_statement = "A" * 255
+
+    response = client.post("/api/values/", json={"statement": max_statement})
+
+    assert response.status_code == 201
+    data = response.json()
+    assert len(data["statement"]) == 255
+    assert data["statement"] == max_statement
+
+
 def test_list_values_empty():
     """Test listing values when none exist."""
     response = client.get("/api/values/")
@@ -201,6 +225,43 @@ def test_update_value_only_whitespace():
 
     assert update_response.status_code == 400
     assert update_response.json()["detail"] == "Value statement cannot be empty"
+
+
+def test_update_value_exceeds_max_length():
+    """Test updating a value with statement exceeding 255 characters fails."""
+    # Create a value
+    create_response = client.post("/api/values/", json={"statement": "Original"})
+    value_id = create_response.json()["id"]
+
+    # Try to update with a statement longer than 255 characters
+    long_statement = "B" * 256
+    update_response = client.put(
+        f"/api/values/{value_id}", json={"statement": long_statement}
+    )
+
+    assert update_response.status_code == 400
+    assert (
+        update_response.json()["detail"]
+        == "Value statement must not exceed 255 characters"
+    )
+
+
+def test_update_value_at_max_length():
+    """Test updating a value with exactly 255 characters succeeds."""
+    # Create a value
+    create_response = client.post("/api/values/", json={"statement": "Original"})
+    value_id = create_response.json()["id"]
+
+    # Update with exactly 255 characters
+    max_statement = "B" * 255
+    update_response = client.put(
+        f"/api/values/{value_id}", json={"statement": max_statement}
+    )
+
+    assert update_response.status_code == 200
+    data = update_response.json()
+    assert len(data["statement"]) == 255
+    assert data["statement"] == max_statement
 
 
 def test_update_nonexistent_value():

@@ -186,8 +186,22 @@ Common HTTP status codes:
 
 ---
 
-## Authentication
+## Authentication & Security
 
-*Not implemented in MVP - single-user application*
+**⚠️ IMPORTANT SECURITY NOTICE**
 
-Future versions will include bearer token or session-based authentication.
+This API currently has **no authentication or authorization** and is intended for a **single-user, local-only deployment**.
+
+### Security Requirements
+
+- **Run the server only in a trusted environment** (for example, bound to `127.0.0.1` or on a host/firewall that blocks external access).
+- **Do NOT expose the `/api` endpoints directly to the public internet or any untrusted network.**
+- If you need remote or multi-user access, you **must** first add an authentication/authorization layer (for example, bearer tokens or session-based auth) or place this service behind an authenticated reverse proxy/gateway.
+
+### Current Configuration
+
+The default server configuration binds to `0.0.0.0`, which means any network client that can reach the service can create, read, and modify value records and other data, which may include sensitive personal information.
+
+### Future Enhancements
+
+Future versions will include bearer token or session-based authentication for production deployments.
