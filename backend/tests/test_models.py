@@ -4,6 +4,7 @@ from app.models import (
     Task,
     Value,
     ReviewCard,
+    User,
     ImpactEnum,
     UrgencyEnum,
     TaskStateEnum,
@@ -19,6 +20,7 @@ def test_task_model_attributes():
 
     # Verify all required columns exist
     assert hasattr(task, "id")
+    assert hasattr(task, "user_id")
     assert hasattr(task, "title")
     assert hasattr(task, "description")
     assert hasattr(task, "state")
@@ -36,6 +38,7 @@ def test_task_model_attributes():
     # Verify relationships
     assert hasattr(task, "values")
     assert hasattr(task, "parent_task")
+    assert hasattr(task, "user")
 
 
 def test_value_model_attributes():
@@ -44,6 +47,7 @@ def test_value_model_attributes():
 
     # Verify all required columns exist
     assert hasattr(value, "id")
+    assert hasattr(value, "user_id")
     assert hasattr(value, "statement")
     assert hasattr(value, "archived")
     assert hasattr(value, "created_at")
@@ -51,6 +55,7 @@ def test_value_model_attributes():
 
     # Verify relationships
     assert hasattr(value, "tasks")
+    assert hasattr(value, "user")
 
 
 def test_review_card_model_attributes():
@@ -59,11 +64,30 @@ def test_review_card_model_attributes():
 
     # Verify all required columns exist
     assert hasattr(review_card, "id")
+    assert hasattr(review_card, "user_id")
     assert hasattr(review_card, "type")
     assert hasattr(review_card, "task_id")
     assert hasattr(review_card, "content")
     assert hasattr(review_card, "responses")
     assert hasattr(review_card, "generated_at")
+
+
+def test_user_model_attributes():
+    """Test that User model has all required attributes."""
+    user = User()
+
+    # Verify all required columns exist
+    assert hasattr(user, "id")
+    assert hasattr(user, "username")
+    assert hasattr(user, "email")
+    assert hasattr(user, "password_hash")
+    assert hasattr(user, "is_active")
+    assert hasattr(user, "created_at")
+    assert hasattr(user, "updated_at")
+
+    # Verify relationships
+    assert hasattr(user, "tasks")
+    assert hasattr(user, "values")
 
 
 def test_impact_enum():
