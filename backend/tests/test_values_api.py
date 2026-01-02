@@ -276,13 +276,13 @@ def test_list_values_with_include_archived():
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 2
-    
+
     # Sort by id to ensure consistent ordering for assertions
     data_sorted = sorted(data, key=lambda x: x["id"])
     assert data_sorted[0]["id"] == value1_id
     assert data_sorted[0]["statement"] == "Active Value"
     assert data_sorted[0]["archived"] is False
-    
+
     assert data_sorted[1]["id"] == value2_id
     assert data_sorted[1]["statement"] == "Archived Value"
     assert data_sorted[1]["archived"] is True
@@ -317,39 +317,36 @@ def test_list_values_include_archived_false_explicit():
 def test_list_values_multi_user_isolation_with_archived():
     """Test that users only see their own archived values."""
     db = TestingSessionLocal()
-    
+
     # Create first user and their values
-    user1 = create_test_user(db, username="user1", email="user1@example.com")
-    user1_id = user1.id
+    create_test_user(db, username="user1", email="user1@example.com")
     db.close()
 
-    response1 = client.post("/api/values/", json={"statement": "User1 Active"})
-    user1_value1_id = response1.json()["id"]
-    
+    client.post("/api/values/", json={"statement": "User1 Active"})
+
     response2 = client.post("/api/values/", json={"statement": "User1 Archived"})
     user1_value2_id = response2.json()["id"]
     client.patch(f"/api/values/{user1_value2_id}/archive")
 
     # Create second user and their values
     db = TestingSessionLocal()
-    user2 = create_test_user(db, username="user2", email="user2@example.com")
-    user2_id = user2.id
+    create_test_user(db, username="user2", email="user2@example.com")
     db.close()
 
     response3 = client.post("/api/values/", json={"statement": "User2 Active"})
     user2_value1_id = response3.json()["id"]
-    
+
     response4 = client.post("/api/values/", json={"statement": "User2 Archived"})
     user2_value2_id = response4.json()["id"]
     client.patch(f"/api/values/{user2_value2_id}/archive")
 
     # User2 should only see their own values (both active and archived)
     response = client.get("/api/values/?include_archived=true")
-    
+
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 2
-    
+
     # Verify all values belong to user2
     for value in data:
         assert value["id"] in [user2_value1_id, user2_value2_id]
