@@ -305,15 +305,15 @@ export default function ValuesPage() {
         )}
       </section>
 
-      {/* Archived Values */}
+      {/* Archived Values - Historical Journal */}
       <section>
-        <h2>Archived Values</h2>
+        <h2>Your Journey</h2>
         <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>
-          Historical record of values you&apos;ve archived. These are read-only to preserve your journey.
+          A record of the values that shaped your path.
         </p>
         {archivedValues.length === 0 ? (
           <p style={{ color: '#666', fontStyle: 'italic' }}>
-            No archived values yet.
+            No archived values yet. As you evolve, archived values will appear here as a record of your journey.
           </p>
         ) : (
           <ul style={{ listStyle: 'none', padding: 0 }}>
@@ -325,19 +325,18 @@ export default function ValuesPage() {
                   marginBottom: '0.5rem',
                   border: '1px solid #ddd',
                   borderRadius: '4px',
-                  backgroundColor: '#f9f9f9'
+                  backgroundColor: '#f9f9f9',
+                  fontStyle: 'italic',
+                  color: '#666'
                 }}
               >
-                <div style={{ fontSize: '1.1rem', color: '#666' }}>
-                  {value.statement}
-                </div>
-                <div style={{ fontSize: '0.85rem', color: '#999', marginTop: '0.25rem' }}>
-                  Created: {new Date(value.created_at).toLocaleDateString()}
-                  {' • '}
-                  Archive date: Not tracked
-                  {' • '}
-                  Tasks: 0
-                </div>
+                From {new Date(value.created_at).toLocaleDateString()} to{' '}
+                <span style={{ color: '#999' }}>(archive date not tracked)</span>, you valued{' '}
+                <strong style={{ color: '#333', fontStyle: 'normal' }}>
+                  &quot;{value.statement}&quot;
+                </strong>
+                , completing{' '}
+                <span style={{ color: '#999' }}>0 (not yet tracked)</span> related tasks during this time.
               </li>
             ))}
           </ul>
