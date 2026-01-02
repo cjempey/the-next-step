@@ -63,8 +63,11 @@ The Next Step is a full-stack application with:
 - `sqlalchemy` - ORM
 - `alembic` - Database migrations
 - `pydantic` - Data validation & settings management
+- `python-jose` - JWT token handling
+- `passlib` - Password hashing
+- `bcrypt` - Password hashing algorithm
 - `openai` - Optional AI integration
-- `psycopg2` - PostgreSQL adapter
+- `psycopg` - PostgreSQL adapter
 
 ### Frontend: React + TypeScript + Vite
 
@@ -102,12 +105,14 @@ The Next Step is a full-stack application with:
 - Alembic migrations make schema changes traceable
 
 **Tables:**
-- `tasks` - Task model
-- `values` - User-defined values
+- `users` - User accounts (username, email, password_hash)
+- `tasks` - Task model (user_id FK)
+- `values` - User-defined values (user_id FK)
 - `task_value_association` - Many-to-many relationship
-- `rejection_dampening` - Track rejected tasks for session
-- `daily_priorities` - Track tasks selected for the day
-- `review_history` - Journaling/audit trail
+- `rejection_dampening` - Track rejected tasks for session (user_id FK)
+- `daily_priorities` - Track tasks selected for the day (user_id FK)
+- `review_history` - Journaling/audit trail (user_id FK)
+- `review_cards` - Generated review cards (user_id FK)
 
 ## Project Structure
 
@@ -117,12 +122,14 @@ the-next-step/
 │   ├── app/
 │   │   ├── api/
 │   │   │   └── routes/              # API endpoints
+│   │   │       ├── auth.py          # Authentication
 │   │   │       ├── tasks.py
 │   │   │       ├── values.py
 │   │   │       ├── suggestions.py
 │   │   │       └── reviews.py
 │   │   ├── core/
 │   │   │   └── database.py           # SQLAlchemy setup
+│   │   ├── auth.py                   # JWT utilities
 │   │   ├── models.py                 # ORM models
 │   │   ├── schemas.py                # Pydantic schemas
 │   │   ├── config.py                 # Settings
@@ -187,11 +194,14 @@ the-next-step/
 
 ```
 1. Frontend (Web/Mobile)
+   └─ User logs in (POST /api/auth/login)
+   └─ Stores JWT token in localStorage/secure storage
    └─ User clicks "What Next?"
-   └─ Calls POST /api/suggestions/next
+   └─ Calls POST /api/suggestions/next (with Authorization: Bearer <token>)
    
 2. Backend API
-   └─ Queries database for Ready tasks
+   └─ Validates JWT token and extracts user_id
+   └─ Queries database for Ready tasks belonging to user
    └─ Applies weighting algorithm:
       - impact weight
       - Urgency weight
@@ -207,7 +217,7 @@ the-next-step/
    └─ User chooses: Start / Not now / Take a break
    
 4. Backend (if "Not now")
-   └─ Records rejection
+   └─ Records rejection for user's session
    └─ Applies dampening to task
    └─ Next suggestion request gets new candidate
 ```
@@ -353,12 +363,23 @@ def suggest_next_task():
 ### E2E
 - Cypress or Playwright tests for core user flows (optional, v2)
 
-## Security Considerations (MVP)
+## Security Considerations
 
-- Simple bearer token or session-based auth (no OAuth yet)
-- No user account signup (single-user MVP)
+### Authentication (MVP)
+- **JWT-based authentication** for all API endpoints (except `/health` and `/api/auth/*`)
+- **Per-user data isolation** - all queries filtered by authenticated user_id
+- **Password hashing** with bcrypt (via passlib)
+- **Token expiration** - configurable (default 30 days)
+- **Secure secret key** - must be changed in production
+
+### Multi-User Support
+- Multiple independent users supported
+- No cross-user data access (enforced at database query level)
+- Task/value sharing deferred to v2
+
+### Other
 - Environment variables for sensitive config (.env file)
-- CORS configured for dev hosts only
+- CORS configured for specific origins only
 
 ## Deployment (Future)
 
@@ -368,12 +389,14 @@ def suggest_next_task():
 
 ## Known Limitations & Deferred Features
 
-- **No multi-user support** (v2)
+- **No task sharing between users** (v2)
 - **No offline sync** (local-first currently, sync in v2)
 - **No AI breakdown conversations** (review cards create a task for later, v2)
 - **No mobile notifications** (nice-to-have)
 - **No analytics dashboard** (avoid gamification)
 - **No custom recurrence patterns** (daily/weekly only for MVP)
+- **No password reset flow** (v2)
+- **No OAuth/social login** (v2)
 
 ---
 

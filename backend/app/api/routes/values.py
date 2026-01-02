@@ -2,12 +2,13 @@
 Value endpoints.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models import Value
+from app.models import Value, User
 from app.schemas import ValueCreate, ValueResponse
+from app.auth import get_current_active_user
 
 router = APIRouter()
 
@@ -41,55 +42,82 @@ def validate_statement(statement: str) -> str:
     return trimmed
 
 
-@router.post("/", response_model=ValueResponse, status_code=201)
-async def create_value(value: ValueCreate, db: Session = Depends(get_db)):
-    """Create a new value."""
-    validated_statement = validate_statement(value.statement)
-
-    # Create new value
-    db_value = Value(statement=validated_statement, archived=False)
-    db.add(db_value)
-    db.commit()
-    db.refresh(db_value)
-    return db_value
-
-
 @router.get("/", response_model=list[ValueResponse])
-async def list_values(db: Session = Depends(get_db)):
-    """List all active values (non-archived)."""
-    values = db.query(Value).filter(~Value.archived).all()
+async def list_values(
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)
+):
+    """List all active values (non-archived) for the authenticated user."""
+    values = (
+        db.query(Value).filter(Value.user_id == current_user.id, ~Value.archived).all()
+    )
     return values
+
+
+@router.post("/", response_model=ValueResponse, status_code=status.HTTP_201_CREATED)
+async def create_value(
+    value_data: ValueCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Create a new value for the authenticated user."""
+    validated_statement = validate_statement(value_data.statement)
+
+    new_value = Value(
+        user_id=current_user.id,
+        statement=validated_statement,
+    )
+    db.add(new_value)
+    db.commit()
+    db.refresh(new_value)
+    return new_value
 
 
 @router.put("/{value_id}", response_model=ValueResponse)
 async def update_value(
-    value_id: int, value: ValueCreate, db: Session = Depends(get_db)
+    value_id: int,
+    value_data: ValueCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """Update a value statement."""
-    validated_statement = validate_statement(value.statement)
+    """Update a value statement for the authenticated user."""
+    validated_statement = validate_statement(value_data.statement)
 
-    # Find the value
-    db_value = db.query(Value).filter(Value.id == value_id).first()
-    if not db_value:
-        raise HTTPException(status_code=404, detail="Value not found")
+    value = (
+        db.query(Value)
+        .filter(Value.id == value_id, Value.user_id == current_user.id)
+        .first()
+    )
 
-    # Update the statement
-    db_value.statement = validated_statement  # type: ignore[assignment]
+    if not value:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Value not found"
+        )
+
+    value.statement = validated_statement  # type: ignore[assignment]
     db.commit()
-    db.refresh(db_value)
-    return db_value
+    db.refresh(value)
+    return value
 
 
 @router.patch("/{value_id}/archive", response_model=ValueResponse)
-async def archive_value(value_id: int, db: Session = Depends(get_db)):
-    """Archive/deactivate a value. Does not affect existing task-value links."""
-    # Find the value
-    db_value = db.query(Value).filter(Value.id == value_id).first()
-    if not db_value:
-        raise HTTPException(status_code=404, detail="Value not found")
+async def archive_value(
+    value_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Archive/deactivate a value for the authenticated user. Does not affect existing task-value links."""
+    value = (
+        db.query(Value)
+        .filter(Value.id == value_id, Value.user_id == current_user.id)
+        .first()
+    )
 
-    # Archive the value
-    db_value.archived = True  # type: ignore[assignment]
+    if not value:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Value not found"
+        )
+
+    value.archived = True  # type: ignore[assignment]
     db.commit()
-    db.refresh(db_value)
-    return db_value
+    db.refresh(value)
+    return value

@@ -45,7 +45,7 @@ docker run -d \
 
 ```bash
 cp .env.example .env
-# Edit .env with your database credentials
+# Edit .env with your database credentials and JWT secret
 ```
 
 Example `.env`:
@@ -54,7 +54,19 @@ DATABASE_URL=postgresql://nextstepapiuser:changeme@localhost:5432/the_next_step
 API_HOST=0.0.0.0
 API_PORT=8000
 DEBUG=True
+
+# JWT Authentication
+# IMPORTANT: Generate a secure secret key for production!
+# Generate with: openssl rand -hex 32
+JWT_SECRET_KEY=your-secret-key-change-in-production
+JWT_EXPIRATION_DAYS=30
+
 OPENAI_API_KEY=sk-...  # Optional
+```
+
+**Security Note:** The default `JWT_SECRET_KEY` is insecure. Generate a secure key for production:
+```bash
+openssl rand -hex 32
 ```
 
 ### 4. Run Database Migrations
@@ -75,6 +87,44 @@ uvicorn app.main:app --reload --port 8000
 
 Server runs at `http://localhost:8000`  
 API docs at `http://localhost:8000/docs` (Swagger UI)
+
+### 6. Authentication Usage
+
+All API endpoints (except `/health`, `/api/auth/register`, and `/api/auth/login`) require JWT authentication.
+
+#### Register a new user:
+```bash
+curl -X POST http://localhost:8000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "alice", "email": "alice@example.com", "password": "securepass123"}'
+```
+
+Response includes JWT token:
+```json
+{
+  "access_token": "eyJ0eXAi...",
+  "token_type": "bearer",
+  "user": {"id": 1, "username": "alice", ...}
+}
+```
+
+#### Login:
+```bash
+curl -X POST http://localhost:8000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "alice", "password": "securepass123"}'
+```
+
+#### Use authenticated endpoints:
+```bash
+# Example: Create a task
+curl -X POST http://localhost:8000/api/tasks \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"title": "Water the plants", "value_ids": []}'
+```
+
+**Web/Mobile clients:** Store the JWT token (e.g., in localStorage or secure storage) and include it in the `Authorization: Bearer <token>` header for all authenticated requests.
 
 ## Web Frontend Setup
 
