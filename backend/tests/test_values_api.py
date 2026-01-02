@@ -1,6 +1,7 @@
 """Tests for Values API endpoints."""
 
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -111,7 +112,7 @@ def cleanup_database():
 def test_create_value():
     """Test creating a new value."""
     db = TestingSessionLocal()
-    user = create_test_user(db)
+    _user = create_test_user(db)  # noqa: F841
     db.close()
 
     response = client.post(
@@ -131,7 +132,7 @@ def test_create_value():
 def test_create_value_with_whitespace():
     """Test creating a value strips whitespace."""
     db = TestingSessionLocal()
-    user = create_test_user(db)
+    _user = create_test_user(db)  # noqa: F841
     db.close()
 
     response = client.post(
@@ -148,7 +149,7 @@ def test_create_value_with_whitespace():
 def test_create_value_empty_string():
     """Test creating a value with empty string fails."""
     db = TestingSessionLocal()
-    user = create_test_user(db)
+    _user = create_test_user(db)  # noqa: F841
     db.close()
 
     response = client.post("/api/values/", json={"statement": ""})
@@ -160,7 +161,7 @@ def test_create_value_empty_string():
 def test_create_value_only_whitespace():
     """Test creating a value with only whitespace fails."""
     db = TestingSessionLocal()
-    user = create_test_user(db)
+    _user = create_test_user(db)  # noqa: F841
     db.close()
 
     response = client.post("/api/values/", json={"statement": "   "})
@@ -172,7 +173,7 @@ def test_create_value_only_whitespace():
 def test_create_value_exceeds_max_length():
     """Test creating a value with statement exceeding 255 characters fails."""
     db = TestingSessionLocal()
-    user = create_test_user(db)
+    _user = create_test_user(db)  # noqa: F841
     db.close()
 
     # Create a statement longer than 255 characters
@@ -191,7 +192,7 @@ def test_create_value_exceeds_max_length():
 def test_create_value_at_max_length():
     """Test creating a value with exactly 255 characters succeeds."""
     db = TestingSessionLocal()
-    user = create_test_user(db)
+    _user = create_test_user(db)  # noqa: F841
     db.close()
 
     # Create a statement with exactly 255 characters
@@ -210,7 +211,7 @@ def test_create_value_at_max_length():
 def test_list_values_empty():
     """Test listing values when none exist."""
     db = TestingSessionLocal()
-    user = create_test_user(db)
+    _user = create_test_user(db)  # noqa: F841
     db.close()
 
     response = client.get("/api/values/")
@@ -222,7 +223,7 @@ def test_list_values_empty():
 def test_list_values():
     """Test listing active values."""
     db = TestingSessionLocal()
-    user = create_test_user(db)
+    _user = create_test_user(db)  # noqa: F841
     db.close()
 
     # Create some values
@@ -243,7 +244,7 @@ def test_list_values():
 def test_list_values_excludes_archived():
     """Test that archived values are not returned."""
     db = TestingSessionLocal()
-    user = create_test_user(db)
+    _user = create_test_user(db)  # noqa: F841
     db.close()
 
     # Create values
@@ -273,7 +274,7 @@ def test_list_values_excludes_archived():
 def test_update_value():
     """Test updating a value statement."""
     db = TestingSessionLocal()
-    user = create_test_user(db)
+    _user = create_test_user(db)  # noqa: F841
     db.close()
 
     # Create a value
@@ -299,7 +300,7 @@ def test_update_value():
 def test_update_value_with_whitespace():
     """Test updating a value strips whitespace."""
     db = TestingSessionLocal()
-    user = create_test_user(db)
+    _user = create_test_user(db)  # noqa: F841
     db.close()
 
     # Create a value
@@ -322,7 +323,7 @@ def test_update_value_with_whitespace():
 def test_update_value_empty_string():
     """Test updating a value with empty string fails."""
     db = TestingSessionLocal()
-    user = create_test_user(db)
+    _user = create_test_user(db)  # noqa: F841
     db.close()
 
     # Create a value
@@ -343,7 +344,7 @@ def test_update_value_empty_string():
 def test_update_value_only_whitespace():
     """Test updating a value with only whitespace fails."""
     db = TestingSessionLocal()
-    user = create_test_user(db)
+    _user = create_test_user(db)  # noqa: F841
     db.close()
 
     # Create a value
@@ -364,7 +365,7 @@ def test_update_value_only_whitespace():
 def test_update_value_exceeds_max_length():
     """Test updating a value with statement exceeding 255 characters fails."""
     db = TestingSessionLocal()
-    user = create_test_user(db)
+    _user = create_test_user(db)  # noqa: F841
     db.close()
 
     # Create a value
@@ -391,7 +392,7 @@ def test_update_value_exceeds_max_length():
 def test_update_value_at_max_length():
     """Test updating a value with exactly 255 characters succeeds."""
     db = TestingSessionLocal()
-    user = create_test_user(db)
+    _user = create_test_user(db)  # noqa: F841
     db.close()
 
     # Create a value
@@ -417,7 +418,7 @@ def test_update_value_at_max_length():
 def test_update_nonexistent_value():
     """Test updating a value that doesn't exist."""
     db = TestingSessionLocal()
-    user = create_test_user(db)
+    _user = create_test_user(db)  # noqa: F841
     db.close()
 
     response = client.put(
@@ -431,7 +432,7 @@ def test_update_nonexistent_value():
 def test_archive_value():
     """Test archiving a value."""
     db = TestingSessionLocal()
-    user = create_test_user(db)
+    _user = create_test_user(db)  # noqa: F841
     db.close()
 
     # Create a value
@@ -455,7 +456,7 @@ def test_archive_value():
 def test_archive_nonexistent_value():
     """Test archiving a value that doesn't exist."""
     db = TestingSessionLocal()
-    user = create_test_user(db)
+    _user = create_test_user(db)  # noqa: F841
     db.close()
 
     response = client.patch("/api/values/999/archive")
@@ -524,7 +525,7 @@ def test_archive_value_doesnt_affect_tasks():
 def test_archived_value_can_be_updated():
     """Test that archived values can still be updated."""
     db = TestingSessionLocal()
-    user = create_test_user(db)
+    _user = create_test_user(db)  # noqa: F841
     db.close()
 
     # Create and archive a value
