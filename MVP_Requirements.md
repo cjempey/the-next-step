@@ -14,7 +14,7 @@ Support neurodivergent adults (primarily autistic and ADHD individuals) in **exe
 
 - Neurodivergent individuals (ADHD, autism, or combination)
 - Personal life context (home, health, self-improvement)
-- Solo user initially; multi-user sharing deferred to v2
+- Multiple independent users supported; task sharing between users deferred to v2
 
 ### 1.3 Primary Outcome
 
@@ -598,7 +598,8 @@ Final Score = With Daily Priority
 | Evening review with modular cards | ✅ | All 5 card types |
 | Partial completion tracking | ✅ | % + notes (reflective) |
 | Reflective notes on tasks | ✅ | Captured during review, not processed |
-| Multi-user / task sharing | ❌ | v2 feature |
+| Multi-user authentication | ✅ | JWT-based, per-user data isolation |
+| Task sharing between users | ❌ | v2 feature |
 | AI task breakdown conversations | ❌ | v2 feature (card creates task, not conversation) |
 | Advanced analytics / dashboards | ❌ | Avoid gamification |
 | Time tracking / duration | ❌ | Deferred; difficulty learning deferred |
@@ -749,7 +750,9 @@ on evening_review_complete:
 
 ## 14. Future Considerations (v2 and Beyond)
 
-- **Multi-user & Sharing:** Tasks shared with partner/caregiver for accountability
+- **Task Sharing Between Users:** Share tasks with partner/caregiver for accountability
+- **Password Reset Flow:** Email-based password reset
+- **OAuth/Social Login:** Sign in with Google, GitHub, etc.
 - **AI Breakdown Conversations:** When user selects "help break it down," launch actual AI dialog to decompose task
 - **Difficulty Learning:** Track task completion times and difficulty trends; influence suggestions
 - **Energy Level Detection:** Optional user input on energy/mood; influence suggestion weighting
@@ -766,3 +769,4 @@ on evening_review_complete:
 |---------|------|--------|---------|
 | 1.0 | 2025-12-29 | Product Owner | Initial MVP Requirements |
 | 2.0 | 2025-12-30 | Product Owner | Refined spec: Ready state, Cancelled state, morning planning, review cards, dampening scope, daily priorities, score transparency |
+| 2.1 | 2026-01-01 | Product Owner | Clarified multi-user support: Multiple independent users in MVP, task sharing deferred to v2. Added JWT authentication requirement. |
