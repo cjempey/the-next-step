@@ -54,6 +54,58 @@ The goal is understanding **GitHub + Copilot workflows**, not mastering Python/J
 - Do not rely on GitHub Actions to catch failures - validate locally first
 - This includes: backend tests, web tests, type checking, linting, etc.
 
+## Technical Debt Policy
+
+When encountering technical debt during code review, development, or CI/CD work:
+
+**Automatically create a GitHub issue** if the debt meets these criteria:
+- **Unrelated to current task** - Don't mix feature work with tech debt fixes
+- **Clearly scoped and actionable** - Specific file/line numbers, clear fix
+- **Not a blocking issue** - Tests pass, feature works, but improvement is needed
+
+**Issue format:**
+```markdown
+## Description
+Brief summary of the technical debt
+
+## Context
+- Where/when discovered (PR, issue, or task)
+- Why it exists (if known)
+- Impact: tests pass but type safety/linting/deprecation warnings
+
+## Issues to Fix
+Specific problems with:
+- File and line numbers
+- Current code (show the problem)
+- Proposed solution (show the fix)
+
+## Acceptance Criteria
+- [ ] Checklist of fixes
+- [ ] All tests still pass
+- [ ] Linting/type checking passes
+- [ ] CI/CD passes
+
+## Technical Notes
+Context for the developer (JVM analogies if helpful)
+```
+
+**Examples of tech debt to auto-create issues for:**
+- Type checking errors (pyright, TypeScript strict mode)
+- Linting warnings that should be fixed
+- Deprecation warnings for libraries/APIs
+- Missing null checks or error handling
+- Code duplication that should be refactored
+
+**Don't create issues for:**
+- Blocking bugs or test failures (fix immediately)
+- Simple typos or formatting (fix inline)
+- Architectural decisions that need discussion (ask first)
+
+**Labels to use:**
+- `technical-debt` (primary)
+- Area: `backend`, `frontend`, `mobile`, `ci-cd`
+- Type: `type-safety`, `testing`, `refactoring`, `deprecation`
+
 ## Example Helpful Explanations
 
 ✅ Good: "We use `app.dependency_overrides` to mock FastAPI dependencies in tests - this is similar to Spring's `@MockBean` but works through FastAPI's dependency injection system"
