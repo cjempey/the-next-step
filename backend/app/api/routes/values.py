@@ -48,9 +48,7 @@ async def list_values(
 ):
     """List all active values (non-archived) for the authenticated user."""
     values = (
-        db.query(Value)
-        .filter(Value.user_id == current_user.id, Value.archived == False)
-        .all()
+        db.query(Value).filter(Value.user_id == current_user.id, ~Value.archived).all()
     )
     return values
 
