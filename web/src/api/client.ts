@@ -38,7 +38,7 @@ export const valueApi = {
     apiClient.get<Value[]>('/values', { params: { include_archived: includeArchived } }),
   create: (data: ValueCreate) => apiClient.post<Value>('/values', data),
   update: (id: number, data: ValueUpdate) => apiClient.put<Value>(`/values/${id}`, data),
-  archive: (id: number) => apiClient.patch<Value>(`/values/${id}/archive`),
+  archive: (id: number) => apiClient.patch<Value>(`/values/${id}/archive`), // Sets archived = true
   delete: (id: number) => apiClient.delete(`/values/${id}`),
 }
 

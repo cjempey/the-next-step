@@ -4,12 +4,12 @@ export interface Value {
   statement: string
   archived: boolean
   created_at: string // ISO 8601 timestamp
+  updated_at: string // ISO 8601 timestamp
 }
 
 export interface ValueCreate {
   statement: string
 }
 
-export interface ValueUpdate {
-  statement: string
-}
+// ValueUpdate uses same schema as ValueCreate (backend accepts ValueCreate for both)
+export type ValueUpdate = ValueCreate

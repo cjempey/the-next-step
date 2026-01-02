@@ -84,7 +84,7 @@ def main():
     print(f"Creating test user...")
     print(f"  Username: {username}")
     print(f"  Email: {email}")
-    print(f"  Password: {password}")
+    print(f"  Password: {'*' * len(password)}")
     print()
     
     try:

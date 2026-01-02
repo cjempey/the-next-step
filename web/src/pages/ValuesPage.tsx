@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import axios from 'axios'
 import { valueApi } from '../api/client'
 import type { Value, ValueCreate } from '../types/value'
 
@@ -11,12 +12,9 @@ export default function ValuesPage() {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editStatement, setEditStatement] = useState('')
   const [archiveConfirmId, setArchiveConfirmId] = useState<number | null>(null)
+  const editInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    loadValues()
-  }, [])
-
-  const loadValues = async () => {
+  const loadValues = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -29,11 +27,20 @@ export default function ValuesPage() {
       setActiveValues(allValues.filter(v => !v.archived))
       setArchivedValues(allValues.filter(v => v.archived))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load values')
+      // Extract backend validation messages for better user feedback
+      if (axios.isAxiosError(err) && err.response?.data?.detail) {
+        setError(err.response.data.detail)
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to load values')
+      }
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    loadValues()
+  }, [loadValues])
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -56,13 +63,19 @@ export default function ValuesPage() {
       setNewValueStatement('')
       await loadValues()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create value')
+      if (axios.isAxiosError(err) && err.response?.data?.detail) {
+        setError(err.response.data.detail)
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to create value')
+      }
     }
   }
 
   const handleStartEdit = (value: Value) => {
     setEditingId(value.id)
     setEditStatement(value.statement)
+    // Auto-focus the edit input after state updates
+    setTimeout(() => editInputRef.current?.focus(), 0)
   }
 
   const handleCancelEdit = () => {
@@ -90,7 +103,11 @@ export default function ValuesPage() {
       setEditStatement('')
       await loadValues()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update value')
+      if (axios.isAxiosError(err) && err.response?.data?.detail) {
+        setError(err.response.data.detail)
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to update value')
+      }
     }
   }
 
@@ -101,7 +118,11 @@ export default function ValuesPage() {
       setArchiveConfirmId(null)
       await loadValues()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to archive value')
+      if (axios.isAxiosError(err) && err.response?.data?.detail) {
+        setError(err.response.data.detail)
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to archive value')
+      }
     }
   }
 
@@ -132,7 +153,11 @@ export default function ValuesPage() {
       {/* Create New Value */}
       <form onSubmit={handleCreate} style={{ marginBottom: '2rem' }}>
         <h2>Add New Value</h2>
+        <label htmlFor="new-value-input" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+          Value Statement
+        </label>
         <input
+          id="new-value-input"
           type="text"
           value={newValueStatement}
           onChange={(e) => setNewValueStatement(e.target.value)}
@@ -149,7 +174,7 @@ export default function ValuesPage() {
         />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <small style={{ color: '#666' }}>
-            {newValueStatement.length}/255 characters
+            {newValueStatement.trim().length}/255 characters
           </small>
           <button
             type="submit"
@@ -190,12 +215,14 @@ export default function ValuesPage() {
               >
                 {editingId === value.id ? (
                   // Edit mode
-                  <div>
+                  <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(value.id); }}>
                     <input
+                      ref={editInputRef}
                       type="text"
                       value={editStatement}
                       onChange={(e) => setEditStatement(e.target.value)}
                       maxLength={255}
+                      aria-label="Edit value statement"
                       style={{
                         width: '100%',
                         padding: '0.5rem',
@@ -205,35 +232,41 @@ export default function ValuesPage() {
                         marginBottom: '0.5rem'
                       }}
                     />
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button
-                        onClick={() => handleSaveEdit(value.id)}
-                        style={{
-                          padding: '0.5rem 1rem',
-                          backgroundColor: '#0066cc',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={handleCancelEdit}
-                        style={{
-                          padding: '0.5rem 1rem',
-                          backgroundColor: '#ccc',
-                          color: '#333',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Cancel
-                      </button>
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <small style={{ color: '#666' }}>
+                        {editStatement.trim().length}/255 characters
+                      </small>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                          type="submit"
+                          style={{
+                            padding: '0.5rem 1rem',
+                            backgroundColor: '#0066cc',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCancelEdit}
+                          style={{
+                            padding: '0.5rem 1rem',
+                            backgroundColor: '#ccc',
+                            color: '#333',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  </form>
                 ) : (
                   // View mode
                   <div>

@@ -50,6 +50,8 @@ def decode_access_token(token: str) -> dict:
     """Decode and validate a JWT token."""
     try:
         # Disable subject validation since we use integer user IDs
+        # JWT spec requires 'sub' to be a string, but we use integer IDs
+        # python-jose enforces this by default, so we disable the check
         payload = jwt.decode(
             token,
             settings.JWT_SECRET_KEY,

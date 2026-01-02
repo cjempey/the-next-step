@@ -100,7 +100,7 @@ Open http://localhost:5173 in your browser.
 - `GET /api/values?include_archived=true` - List all values
 - `POST /api/values` - Create new value
 - `PUT /api/values/{id}` - Update value statement
-- `PATCH /api/values/{id}/archive` - Archive/unarchive value (toggles)
+- `PATCH /api/values/{id}/archive` - Archive value (sets archived = true)
 
 ## Known Limitations (By Design)
 
