@@ -44,12 +44,30 @@ def validate_statement(statement: str) -> str:
 
 @router.get("/", response_model=list[ValueResponse])
 async def list_values(
-    db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)
+    include_archived: bool = False,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """List all active values (non-archived) for the authenticated user."""
-    values = (
-        db.query(Value).filter(Value.user_id == current_user.id, ~Value.archived).all()
-    )
+    """List values for the authenticated user.
+
+    By default, returns only active (non-archived) values.
+    Set include_archived=true to include archived values in results.
+
+    Args:
+        include_archived: If True, includes archived values in the response.
+                         If False (default), returns only active values.
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        List of values for the authenticated user
+    """
+    query = db.query(Value).filter(Value.user_id == current_user.id)
+
+    if not include_archived:
+        query = query.filter(~Value.archived)
+
+    values = query.all()
     return values
 
 

@@ -66,7 +66,17 @@ Create a new value statement.
 
 **GET** `/values`
 
-List all active (non-archived) values.
+List all active (non-archived) values by default. Optionally include archived values with the `include_archived` query parameter.
+
+**Query Parameters:**
+- `include_archived` (boolean, optional) - If `true`, includes archived values in the response. Defaults to `false`.
+
+**Example Requests:**
+```
+GET /values                         # Returns only active values (default)
+GET /values?include_archived=false  # Returns only active values (explicit)
+GET /values?include_archived=true   # Returns both active and archived values
+```
 
 **Response:** `200 OK`
 ```json
@@ -86,9 +96,34 @@ List all active (non-archived) values.
 ]
 ```
 
+**Response with archived values (when `include_archived=true`):**
+```json
+[
+  {
+    "id": 1,
+    "statement": "I am improving in my craft",
+    "archived": false,
+    "created_at": "2026-01-01T12:00:00Z"
+  },
+  {
+    "id": 2,
+    "statement": "My family comes first",
+    "archived": false,
+    "created_at": "2026-01-01T12:05:00Z"
+  },
+  {
+    "id": 3,
+    "statement": "Old value I no longer prioritize",
+    "archived": true,
+    "created_at": "2026-01-01T11:00:00Z"
+  }
+]
+```
+
 **Notes:**
-- Archived values are excluded from this list
-- Returns empty array `[]` if no active values exist
+- Archived values are excluded by default (backwards compatible behavior)
+- Returns empty array `[]` if no values exist
+- Only returns values belonging to the authenticated user (multi-user isolation)
 
 **Error Responses:**
 - `401 Unauthorized` - Missing or invalid JWT token

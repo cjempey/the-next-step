@@ -254,6 +254,105 @@ def test_list_values_excludes_archived():
     assert data[0]["id"] == value1_id
 
 
+def test_list_values_with_include_archived():
+    """Test that archived values are included when include_archived=true."""
+    db = TestingSessionLocal()
+    create_test_user(db)
+    db.close()
+
+    # Create values
+    response1 = client.post("/api/values/", json={"statement": "Active Value"})
+    value1_id = response1.json()["id"]
+
+    response2 = client.post("/api/values/", json={"statement": "Archived Value"})
+    value2_id = response2.json()["id"]
+
+    # Archive the second value
+    client.patch(f"/api/values/{value2_id}/archive")
+
+    # List values with include_archived=true
+    response = client.get("/api/values/?include_archived=true")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+
+    # Sort by id to ensure consistent ordering for assertions
+    data_sorted = sorted(data, key=lambda x: x["id"])
+    assert data_sorted[0]["id"] == value1_id
+    assert data_sorted[0]["statement"] == "Active Value"
+    assert data_sorted[0]["archived"] is False
+
+    assert data_sorted[1]["id"] == value2_id
+    assert data_sorted[1]["statement"] == "Archived Value"
+    assert data_sorted[1]["archived"] is True
+
+
+def test_list_values_include_archived_false_explicit():
+    """Test that explicitly setting include_archived=false excludes archived values."""
+    db = TestingSessionLocal()
+    create_test_user(db)
+    db.close()
+
+    # Create values
+    response1 = client.post("/api/values/", json={"statement": "Active Value"})
+    value1_id = response1.json()["id"]
+
+    response2 = client.post("/api/values/", json={"statement": "Archived Value"})
+    value2_id = response2.json()["id"]
+
+    # Archive the second value
+    client.patch(f"/api/values/{value2_id}/archive")
+
+    # List values with explicit include_archived=false
+    response = client.get("/api/values/?include_archived=false")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["statement"] == "Active Value"
+    assert data[0]["id"] == value1_id
+
+
+def test_list_values_multi_user_isolation_with_archived():
+    """Test that users only see their own archived values."""
+    db = TestingSessionLocal()
+
+    # Create first user and their values
+    create_test_user(db, username="user1", email="user1@example.com")
+    db.close()
+
+    client.post("/api/values/", json={"statement": "User1 Active"})
+
+    response2 = client.post("/api/values/", json={"statement": "User1 Archived"})
+    user1_value2_id = response2.json()["id"]
+    client.patch(f"/api/values/{user1_value2_id}/archive")
+
+    # Create second user and their values
+    db = TestingSessionLocal()
+    create_test_user(db, username="user2", email="user2@example.com")
+    db.close()
+
+    response3 = client.post("/api/values/", json={"statement": "User2 Active"})
+    user2_value1_id = response3.json()["id"]
+
+    response4 = client.post("/api/values/", json={"statement": "User2 Archived"})
+    user2_value2_id = response4.json()["id"]
+    client.patch(f"/api/values/{user2_value2_id}/archive")
+
+    # User2 should only see their own values (both active and archived)
+    response = client.get("/api/values/?include_archived=true")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+
+    # Verify all values belong to user2
+    for value in data:
+        assert value["id"] in [user2_value1_id, user2_value2_id]
+        assert value["statement"].startswith("User2")
+
+
 def test_update_value():
     """Test updating a value statement."""
     db = TestingSessionLocal()
