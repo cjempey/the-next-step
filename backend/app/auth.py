@@ -51,10 +51,10 @@ def decode_access_token(token: str) -> dict:
     try:
         # Disable subject validation since we use integer user IDs
         payload = jwt.decode(
-            token, 
-            settings.JWT_SECRET_KEY, 
+            token,
+            settings.JWT_SECRET_KEY,
             algorithms=[ALGORITHM],
-            options={"verify_sub": False}
+            options={"verify_sub": False},
         )
         return payload
     except JWTError:
