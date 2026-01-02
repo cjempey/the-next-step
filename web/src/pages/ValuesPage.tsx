@@ -105,16 +105,6 @@ export default function ValuesPage() {
     }
   }
 
-  const handleUnarchive = async (id: number) => {
-    try {
-      setError(null)
-      await valueApi.archive(id) // Same endpoint toggles archive status
-      await loadValues()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to unarchive value')
-    }
-  }
-
   if (loading) {
     return <div style={{ padding: '2rem' }}>Loading values...</div>
   }
@@ -319,7 +309,7 @@ export default function ValuesPage() {
       <section>
         <h2>Archived Values</h2>
         <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>
-          Values you&apos;ve archived for reference. Task counts are not yet tracked.
+          Historical record of values you&apos;ve archived. These are read-only to preserve your journey.
         </p>
         {archivedValues.length === 0 ? (
           <p style={{ color: '#666', fontStyle: 'italic' }}>
@@ -338,32 +328,16 @@ export default function ValuesPage() {
                   backgroundColor: '#f9f9f9'
                 }}
               >
-                <div style={{ marginBottom: '0.5rem' }}>
-                  <div style={{ fontSize: '1.1rem', color: '#666' }}>
-                    {value.statement}
-                  </div>
-                  <div style={{ fontSize: '0.85rem', color: '#999', marginTop: '0.25rem' }}>
-                    Created: {new Date(value.created_at).toLocaleDateString()}
-                    {' • '}
-                    Archive date: Not tracked
-                    {' • '}
-                    Tasks: 0
-                  </div>
+                <div style={{ fontSize: '1.1rem', color: '#666' }}>
+                  {value.statement}
                 </div>
-                <button
-                  onClick={() => handleUnarchive(value.id)}
-                  style={{
-                    padding: '0.25rem 0.75rem',
-                    backgroundColor: '#0066cc',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem'
-                  }}
-                >
-                  Unarchive
-                </button>
+                <div style={{ fontSize: '0.85rem', color: '#999', marginTop: '0.25rem' }}>
+                  Created: {new Date(value.created_at).toLocaleDateString()}
+                  {' • '}
+                  Archive date: Not tracked
+                  {' • '}
+                  Tasks: 0
+                </div>
               </li>
             ))}
           </ul>
