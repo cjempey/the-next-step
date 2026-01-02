@@ -18,8 +18,8 @@ SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args={"check_same_thread": False},
-    poolclass=StaticPool
-    )
+    poolclass=StaticPool,
+)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Create tables once for all tests
@@ -43,7 +43,7 @@ async def override_get_current_active_user():
     # Return a simple mock user object to avoid session issues
     if _test_user_data is None:
         raise HTTPException(status_code=401, detail="No test user set")
-    
+
     # Create a simple class that acts like a User but isn't bound to a session
     class MockUser:
         def __init__(self, id, username, email, is_active):
@@ -51,12 +51,12 @@ async def override_get_current_active_user():
             self.username = username
             self.email = email
             self.is_active = is_active
-    
+
     return MockUser(
-        id=_test_user_data['id'],
-        username=_test_user_data['username'],
-        email=_test_user_data['email'],
-        is_active=_test_user_data['is_active']
+        id=_test_user_data["id"],
+        username=_test_user_data["username"],
+        email=_test_user_data["email"],
+        is_active=_test_user_data["is_active"],
     )
 
 
@@ -74,21 +74,16 @@ def create_test_user(db, username="testuser", email="test@example.com"):
     # Use a pre-hashed password to avoid bcrypt issues in tests
     # This is the hash for password "test123"
     prehashed = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYKJkPx0tAi"
-    user = User(
-        username=username,
-        email=email,
-        password_hash=prehashed,
-        is_active=True
-    )
+    user = User(username=username, email=email, password_hash=prehashed, is_active=True)
     db.add(user)
     db.commit()
     db.refresh(user)
     # Store user data as a dict to avoid session issues
     _test_user_data = {
-        'id': user.id,
-        'username': user.username,
-        'email': user.email,
-        'is_active': user.is_active
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "is_active": user.is_active,
     }
     return user
 
@@ -118,7 +113,6 @@ def test_create_value():
     response = client.post(
         "/api/values/",
         json={"statement": "I am improving in my craft"},
-        
     )
 
     assert response.status_code == 201
@@ -138,7 +132,6 @@ def test_create_value_with_whitespace():
     response = client.post(
         "/api/values/",
         json={"statement": "  My family comes first  "},
-        
     )
 
     assert response.status_code == 201
@@ -179,14 +172,10 @@ def test_create_value_exceeds_max_length():
     # Create a statement longer than 255 characters
     long_statement = "A" * 256
 
-    response = client.post(
-        "/api/values/", json={"statement": long_statement}
-    )
+    response = client.post("/api/values/", json={"statement": long_statement})
 
     assert response.status_code == 400
-    assert (
-        response.json()["detail"] == "Value statement must not exceed 255 characters"
-    )
+    assert response.json()["detail"] == "Value statement must not exceed 255 characters"
 
 
 def test_create_value_at_max_length():
@@ -198,9 +187,7 @@ def test_create_value_at_max_length():
     # Create a statement with exactly 255 characters
     max_statement = "A" * 255
 
-    response = client.post(
-        "/api/values/", json={"statement": max_statement}
-    )
+    response = client.post("/api/values/", json={"statement": max_statement})
 
     assert response.status_code == 201
     data = response.json()
@@ -248,14 +235,10 @@ def test_list_values_excludes_archived():
     db.close()
 
     # Create values
-    response1 = client.post(
-        "/api/values/", json={"statement": "Active Value"}
-    )
+    response1 = client.post("/api/values/", json={"statement": "Active Value"})
     value1_id = response1.json()["id"]
 
-    response2 = client.post(
-        "/api/values/", json={"statement": "Archived Value"}
-    )
+    response2 = client.post("/api/values/", json={"statement": "Archived Value"})
     value2_id = response2.json()["id"]
 
     # Archive the second value
@@ -287,7 +270,6 @@ def test_update_value():
     update_response = client.put(
         f"/api/values/{value_id}",
         json={"statement": "Updated statement"},
-        
     )
 
     assert update_response.status_code == 200
@@ -304,16 +286,13 @@ def test_update_value_with_whitespace():
     db.close()
 
     # Create a value
-    create_response = client.post(
-        "/api/values/", json={"statement": "Original"}
-    )
+    create_response = client.post("/api/values/", json={"statement": "Original"})
     value_id = create_response.json()["id"]
 
     # Update with whitespace
     update_response = client.put(
         f"/api/values/{value_id}",
         json={"statement": "  Updated  "},
-        
     )
 
     assert update_response.status_code == 200
@@ -327,15 +306,11 @@ def test_update_value_empty_string():
     db.close()
 
     # Create a value
-    create_response = client.post(
-        "/api/values/", json={"statement": "Original"}
-    )
+    create_response = client.post("/api/values/", json={"statement": "Original"})
     value_id = create_response.json()["id"]
 
     # Try to update with empty string
-    update_response = client.put(
-        f"/api/values/{value_id}", json={"statement": ""}
-    )
+    update_response = client.put(f"/api/values/{value_id}", json={"statement": ""})
 
     assert update_response.status_code == 400
     assert update_response.json()["detail"] == "Value statement cannot be empty"
@@ -348,15 +323,11 @@ def test_update_value_only_whitespace():
     db.close()
 
     # Create a value
-    create_response = client.post(
-        "/api/values/", json={"statement": "Original"}
-    )
+    create_response = client.post("/api/values/", json={"statement": "Original"})
     value_id = create_response.json()["id"]
 
     # Try to update with whitespace only
-    update_response = client.put(
-        f"/api/values/{value_id}", json={"statement": "   "}
-    )
+    update_response = client.put(f"/api/values/{value_id}", json={"statement": "   "})
 
     assert update_response.status_code == 400
     assert update_response.json()["detail"] == "Value statement cannot be empty"
@@ -369,9 +340,7 @@ def test_update_value_exceeds_max_length():
     db.close()
 
     # Create a value
-    create_response = client.post(
-        "/api/values/", json={"statement": "Original"}
-    )
+    create_response = client.post("/api/values/", json={"statement": "Original"})
     value_id = create_response.json()["id"]
 
     # Try to update with a statement longer than 255 characters
@@ -379,7 +348,6 @@ def test_update_value_exceeds_max_length():
     update_response = client.put(
         f"/api/values/{value_id}",
         json={"statement": long_statement},
-        
     )
 
     assert update_response.status_code == 400
@@ -396,9 +364,7 @@ def test_update_value_at_max_length():
     db.close()
 
     # Create a value
-    create_response = client.post(
-        "/api/values/", json={"statement": "Original"}
-    )
+    create_response = client.post("/api/values/", json={"statement": "Original"})
     value_id = create_response.json()["id"]
 
     # Update with exactly 255 characters
@@ -406,7 +372,6 @@ def test_update_value_at_max_length():
     update_response = client.put(
         f"/api/values/{value_id}",
         json={"statement": max_statement},
-        
     )
 
     assert update_response.status_code == 200
@@ -421,9 +386,7 @@ def test_update_nonexistent_value():
     _user = create_test_user(db)  # noqa: F841
     db.close()
 
-    response = client.put(
-        "/api/values/999", json={"statement": "New statement"}
-    )
+    response = client.put("/api/values/999", json={"statement": "New statement"})
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Value not found"
@@ -436,15 +399,11 @@ def test_archive_value():
     db.close()
 
     # Create a value
-    create_response = client.post(
-        "/api/values/", json={"statement": "To be archived"}
-    )
+    create_response = client.post("/api/values/", json={"statement": "To be archived"})
     value_id = create_response.json()["id"]
 
     # Archive the value
-    archive_response = client.patch(
-        f"/api/values/{value_id}/archive"
-    )
+    archive_response = client.patch(f"/api/values/{value_id}/archive")
 
     assert archive_response.status_code == 200
     data = archive_response.json()
@@ -472,9 +431,7 @@ def test_archive_value_doesnt_affect_tasks():
     user_id = user.id  # Store user_id before using db for other operations
 
     # Create a value
-    value_response = client.post(
-        "/api/values/", json={"statement": "Test Value"}
-    )
+    value_response = client.post("/api/values/", json={"statement": "Test Value"})
     value_id = value_response.json()["id"]
 
     # Create a task linked to this value (using database directly since tasks API may not be implemented)
@@ -529,9 +486,7 @@ def test_archived_value_can_be_updated():
     db.close()
 
     # Create and archive a value
-    create_response = client.post(
-        "/api/values/", json={"statement": "Original"}
-    )
+    create_response = client.post("/api/values/", json={"statement": "Original"})
     value_id = create_response.json()["id"]
     client.patch(f"/api/values/{value_id}/archive")
 
@@ -539,7 +494,6 @@ def test_archived_value_can_be_updated():
     update_response = client.put(
         f"/api/values/{value_id}",
         json={"statement": "Updated archived value"},
-        
     )
 
     assert update_response.status_code == 200
