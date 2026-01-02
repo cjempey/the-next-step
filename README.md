@@ -79,6 +79,14 @@ See [MVP_Requirements.md](MVP_Requirements.md) for the full product specificatio
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for technical design decisions.
 
+## Developer Context
+
+This is a **learning project** focused on GitHub workflows and GitHub Copilot development patterns. Built by a developer with 12 years professional experience in Java and Groovy.
+
+**Tech stack chosen for Copilot compatibility:** Python/FastAPI (backend), React/TypeScript (web), React Native (mobile)
+
+The primary goal is learning to work effectively with GitHub and Copilot, not mastering these specific languages. If contributing or reviewing code, explanations of Python/JS/TS patterns are helpful - JVM comparisons appreciated when relevant!
+
 ## Contributing
 
 This is a solo learning project, but the codebase is public. Feel free to explore, fork, or adapt for your own use.
