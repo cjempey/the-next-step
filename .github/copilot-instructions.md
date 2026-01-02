@@ -33,7 +33,20 @@ This is a **learning project** focused on:
 
 The goal is understanding **GitHub + Copilot workflows**, not mastering Python/JS/TS. These languages were chosen because they work well with Copilot.
 
-## CI/CD Requirements
+## Development Practices
+
+### Test-Driven Development (TDD)
+- **Prefer TDD approach when feasible** - write tests before implementation
+- Tests help clarify requirements and prevent regressions
+- For new features:
+  1. Write failing test that describes desired behavior
+  2. Implement minimal code to make test pass
+  3. Refactor while keeping tests green
+- For bug fixes: Write test that reproduces the bug, then fix it
+- Backend: Use pytest with fixtures and FastAPI TestClient
+- Frontend: Testing approach TBD (manual verification acceptable initially)
+
+### CI/CD Requirements
 
 **Before considering any work complete:**
 - Run all CI checks locally to ensure they pass
