@@ -90,6 +90,9 @@ List all active (non-archived) values.
 - Archived values are excluded from this list
 - Returns empty array `[]` if no active values exist
 
+**Error Responses:**
+- `401 Unauthorized` - Missing or invalid JWT token
+
 ---
 
 ### Update Value
@@ -157,6 +160,7 @@ Archive (deactivate) a value. Archived values are excluded from the active value
 - Archived values are excluded from GET /values listing
 
 **Error Responses:**
+- `401 Unauthorized` - Missing or invalid JWT token
 - `404 Not Found` - Value with given ID does not exist
 
 ---

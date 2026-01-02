@@ -93,7 +93,7 @@ async def update_value(
             status_code=status.HTTP_404_NOT_FOUND, detail="Value not found"
         )
 
-    value.statement = validated_statement  # type: ignore[assignment]
+    value.statement = validated_statement
     db.commit()
     db.refresh(value)
     return value
@@ -117,7 +117,7 @@ async def archive_value(
             status_code=status.HTTP_404_NOT_FOUND, detail="Value not found"
         )
 
-    value.archived = True  # type: ignore[assignment]
+    value.archived = True
     db.commit()
     db.refresh(value)
     return value
