@@ -2,6 +2,10 @@
 """
 Script to create a test user and retrieve JWT token for development/testing.
 
+IMPORTANT: This script generates tokens using the JWT_SECRET_KEY from .env
+If your backend server is already running, you should use the login endpoint instead:
+    curl -X POST http://localhost:8000/api/auth/login -H "Content-Type: application/json" -d '{"username":"youruser","password":"yourpass"}'
+
 Usage (from backend directory):
     uv run python scripts/create_test_user.py [username] [email] [password]
     
