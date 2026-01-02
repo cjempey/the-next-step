@@ -4,6 +4,25 @@ API base URL: `http://localhost:8000/api`
 
 Interactive API docs available at: `http://localhost:8000/docs` (Swagger UI)
 
+## Authentication
+
+This API uses **JWT-based authentication** with the HTTP Bearer scheme. All endpoints require a valid JWT access token provided in the `Authorization` header.
+
+**Request Header:**
+```
+Authorization: Bearer <your-jwt-access-token>
+```
+
+**Authentication Requirements:**
+- All Values endpoints require authentication
+- Requests without a valid token will receive `401 Unauthorized`
+- Data is scoped by `user_id` - users can only access their own values
+
+**Security Notes:**
+- Protect your JWT secret key (configured via `JWT_SECRET_KEY` environment variable)
+- Use HTTPS in production to protect tokens in transit
+- Tokens should be kept secure and not shared
+
 ## Values Endpoints
 
 User-defined values represent personal principles or goals (e.g., "I am improving in my craft", "My family comes first"). Values are linked to tasks to provide context and meaning.
@@ -33,10 +52,13 @@ Create a new value statement.
 
 **Validation:**
 - `statement` must not be empty or whitespace-only
+- `statement` must not exceed 255 characters
 - Leading/trailing whitespace is automatically trimmed
 
 **Error Responses:**
 - `400 Bad Request` - Empty or whitespace-only statement
+- `400 Bad Request` - Statement exceeds maximum length of 255 characters
+- `401 Unauthorized` - Missing or invalid JWT token
 
 ---
 
@@ -98,10 +120,13 @@ Update a value's statement.
 
 **Validation:**
 - `statement` must not be empty or whitespace-only
+- `statement` must not exceed 255 characters
 - Leading/trailing whitespace is automatically trimmed
 
 **Error Responses:**
 - `400 Bad Request` - Empty or whitespace-only statement
+- `400 Bad Request` - Statement exceeds maximum length of 255 characters
+- `401 Unauthorized` - Missing or invalid JWT token
 - `404 Not Found` - Value with given ID does not exist
 
 ---
@@ -168,6 +193,7 @@ Common HTTP status codes:
 - `200 OK` - Request succeeded
 - `201 Created` - Resource created successfully
 - `400 Bad Request` - Invalid request data or validation error
+- `401 Unauthorized` - Authentication failed (missing or invalid JWT token)
 - `404 Not Found` - Resource not found
 - `500 Internal Server Error` - Server error
 
@@ -186,22 +212,20 @@ Common HTTP status codes:
 
 ---
 
-## Authentication & Security
+## Security & Configuration
 
-**⚠️ IMPORTANT SECURITY NOTICE**
-
-This API currently has **no authentication or authorization** and is intended for a **single-user, local-only deployment**.
+This API uses **JWT-based authentication** via the `HTTPBearer` scheme. All `/values` endpoints require a valid JWT access token and restrict data access by the authenticated user's `user_id`. Requests without a valid token are rejected with **401 Unauthorized**.
 
 ### Security Requirements
 
-- **Run the server only in a trusted environment** (for example, bound to `127.0.0.1` or on a host/firewall that blocks external access).
-- **Do NOT expose the `/api` endpoints directly to the public internet or any untrusted network.**
-- If you need remote or multi-user access, you **must** first add an authentication/authorization layer (for example, bearer tokens or session-based auth) or place this service behind an authenticated reverse proxy/gateway.
+- **Protect your JWT secret**: Configure `JWT_SECRET_KEY` securely via environment variables or a secrets manager. Do **not** hard-code secrets in source code or commit them to version control.
+- **Run the server in a trusted environment** and restrict who can obtain valid JWTs (for example, by controlling your user management and token-issuing process).
+- If you expose the `/api` endpoints beyond localhost, ensure that transport is protected via HTTPS/SSL termination at a reverse proxy and that only trusted clients have access to valid JWTs.
 
 ### Current Configuration
 
-The default server configuration binds to `0.0.0.0`, which means any network client that can reach the service can create, read, and modify value records and other data, which may include sensitive personal information.
+By default, the server binds to `0.0.0.0`, which makes it reachable from other hosts on the network. However, the `/values` endpoints enforce JWT-based HTTP Bearer authentication and filter data by `user_id`, so only requests with a valid JWT can create, read, or modify a user's value records.
 
 ### Future Enhancements
 
-Future versions will include bearer token or session-based authentication for production deployments.
+Future versions may extend and harden authentication and authorization (for example, role-based access control, token refresh flows, or additional security options) for production deployments.

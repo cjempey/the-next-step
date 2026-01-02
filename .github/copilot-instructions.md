@@ -33,6 +33,14 @@ This is a **learning project** focused on:
 
 The goal is understanding **GitHub + Copilot workflows**, not mastering Python/JS/TS. These languages were chosen because they work well with Copilot.
 
+## CI/CD Requirements
+
+**Before considering any work complete:**
+- Run all CI checks locally to ensure they pass
+- Verify linting, type checking, tests, and builds succeed
+- Do not rely on GitHub Actions to catch failures - validate locally first
+- This includes: backend tests, web tests, type checking, linting, etc.
+
 ## Example Helpful Explanations
 
 ✅ Good: "We use `app.dependency_overrides` to mock FastAPI dependencies in tests - this is similar to Spring's `@MockBean` but works through FastAPI's dependency injection system"
