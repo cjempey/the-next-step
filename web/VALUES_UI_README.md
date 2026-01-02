@@ -10,6 +10,19 @@ uv run uvicorn app.main:app --reload
 ```
 
 ### 2. Create a test user and get auth token
+
+**Option A: Use the script (easiest)**
+```bash
+cd backend
+uv run python scripts/create_test_user.py
+
+# Or with custom credentials:
+# uv run python scripts/create_test_user.py myuser test@example.com mypass123
+```
+
+The script will output a JWT token. Copy it for step 3.
+
+**Option B: Manual with curl**
 ```bash
 # Register a test user
 curl -X POST http://localhost:8000/api/auth/register \
