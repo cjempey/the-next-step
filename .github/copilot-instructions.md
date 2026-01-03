@@ -224,7 +224,7 @@ The API returns 500 errors when a user tries to fetch tasks without being authen
 - `.github/workflows/ci.yml` - CI/CD pipeline configuration
 
 **Development Commands:**
-- Backend: `cd backend && uv pip install -r requirements.txt && pytest`
+- Backend: `cd backend && uv sync && uv run pytest`
 - Web: `cd web && npm install && npm run dev`
 - Full CI Check: `./scripts/check-ci.sh`
 
@@ -253,7 +253,7 @@ The API returns 500 errors when a user tries to fetch tasks without being authen
 
 **Before Merging:**
 - All tests pass locally and in CI
-- No linting or type checking errors
+- Linter, formatter, and type checker all return zero exit status (no warnings or errors)
 - Code follows existing patterns and conventions
 - Security vulnerabilities addressed (Copilot runs security checks)
 - No sensitive data or secrets in code
