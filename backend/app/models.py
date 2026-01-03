@@ -115,11 +115,11 @@ class Task(Base):
 
 class Value(Base):
     """User-defined value model.
-    
+
     The archived state is tracked via the archived_at timestamp:
     - archived_at = NULL: value is active
     - archived_at != NULL: value is archived (with timestamp of when it was archived)
-    
+
     The hybrid property 'archived' provides a convenient boolean interface
     for Python code and SQL queries, computed from archived_at.
     """
@@ -139,16 +139,16 @@ class Value(Base):
     @hybrid_property
     def archived(self) -> bool:
         """Return True if value is archived (has archived_at timestamp).
-        
+
         This provides a convenient boolean interface in Python code:
             if value.archived: ...
         """
         return self.archived_at is not None
-    
+
     @archived.expression
     def archived(cls):
         """SQL expression for filtering by archived status.
-        
+
         This enables filtering in queries:
             query.filter(~Value.archived)  # active values only
             query.filter(Value.archived)   # archived values only

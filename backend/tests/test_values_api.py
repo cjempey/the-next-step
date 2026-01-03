@@ -703,6 +703,7 @@ def test_hybrid_property_filtering_active_values():
 
     # Archive one value
     from datetime import datetime
+
     archived_value.archived_at = datetime.utcnow()
     db.commit()
     db.close()
@@ -733,6 +734,7 @@ def test_hybrid_property_filtering_archived_values():
 
     # Archive one value
     from datetime import datetime
+
     archived_value.archived_at = datetime.utcnow()
     db.commit()
     db.close()
@@ -768,6 +770,7 @@ def test_hybrid_property_returns_correct_boolean():
 
     # Archive the value
     from datetime import datetime
+
     active_value.archived_at = datetime.utcnow()
     db.commit()
     db.refresh(active_value)

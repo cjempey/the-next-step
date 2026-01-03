@@ -124,25 +124,25 @@ async def archive_value(
     current_user: User = Depends(get_current_active_user),
 ):
     """Archive a value for the authenticated user.
-    
+
     Archiving makes a value part of "Your Journey", showing when you focused
     on this value. Archived values do not affect existing task-value links.
-    
+
     This endpoint is idempotent: archiving an already-archived value succeeds
     without error and preserves the original archived_at timestamp. This allows
     the UI to safely call archive multiple times without losing historical data.
-    
+
     To focus on this value again, create a new active value with the same
     statement (UI provides "Revisit" button for this).
-    
+
     Args:
         value_id: ID of the value to archive
         db: Database session
         current_user: Authenticated user
-    
+
     Returns:
         The archived value with archived_at timestamp
-    
+
     Raises:
         HTTPException: 404 if value not found or doesn't belong to user
     """
@@ -156,14 +156,15 @@ async def archive_value(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Value not found"
         )
-    
+
     # Idempotent: only set archived_at if not already set
     # This preserves the original archive date for historical accuracy
     if not value.archived:
         from datetime import datetime
+
         value.archived_at = datetime.utcnow()
         db.commit()
         db.refresh(value)
-    
+
     # Return value whether newly archived or already archived
     return value

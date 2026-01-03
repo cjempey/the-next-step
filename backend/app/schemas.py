@@ -110,7 +110,7 @@ class ValueCreate(BaseModel):
 
 class ValueResponse(BaseModel):
     """Value response.
-    
+
     Returns both the computed 'archived' boolean (for client convenience)
     and the 'archived_at' timestamp (source of truth for archive status).
     """
