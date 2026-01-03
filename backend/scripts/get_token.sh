@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 # Get JWT token from running backend server
+# Setup: chmod +x backend/scripts/get_token.sh (run once to make executable)
 # Usage: ./scripts/get_token.sh [username] [password]
 #
 

@@ -44,6 +44,7 @@ export default function ValuesPage() {
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setError(null)
     const trimmed = newValueStatement.trim()
     
     if (!trimmed) {
@@ -57,7 +58,6 @@ export default function ValuesPage() {
     }
 
     try {
-      setError(null)
       const payload: ValueCreate = { statement: trimmed }
       await valueApi.create(payload)
       setNewValueStatement('')
@@ -72,6 +72,7 @@ export default function ValuesPage() {
   }
 
   const handleStartEdit = (value: Value) => {
+    setError(null)
     setEditingId(value.id)
     setEditStatement(value.statement)
     // Auto-focus the edit input after state updates
@@ -364,12 +365,24 @@ export default function ValuesPage() {
                 }}
               >
                 From {new Date(value.created_at).toLocaleDateString()} to{' '}
-                <span style={{ color: '#999' }}>(archive date not tracked)</span>, you valued{' '}
+                <span 
+                  style={{ color: '#999' }}
+                  title="Archive date tracking is coming soon"
+                >
+                  (archive date coming soon)
+                </span>
+                , you valued{' '}
                 <strong style={{ color: '#333', fontStyle: 'normal' }}>
                   &quot;{value.statement}&quot;
                 </strong>
-                , completing{' '}
-                <span style={{ color: '#999' }}>0 (not yet tracked)</span> related tasks during this time.
+                , with{' '}
+                <span 
+                  style={{ color: '#999' }}
+                  title="Task history for archived values will be added in a future update"
+                >
+                  task history coming soon
+                </span>
+                .
               </li>
             ))}
           </ul>

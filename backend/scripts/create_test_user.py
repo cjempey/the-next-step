@@ -81,6 +81,24 @@ def main():
     email = sys.argv[2] if len(sys.argv) > 2 else "test@example.com"
     password = sys.argv[3] if len(sys.argv) > 3 else "testpass123"
     
+    # Basic validation
+    if not username or not username.strip():
+        print("❌ Error: Username cannot be empty")
+        sys.exit(1)
+    
+    if not email or not email.strip():
+        print("❌ Error: Email cannot be empty")
+        sys.exit(1)
+    
+    # Basic email format validation
+    if '@' not in email or '.' not in email.split('@')[-1]:
+        print("❌ Error: Email must be in valid format (e.g., user@example.com)")
+        sys.exit(1)
+    
+    if not password or len(password) < 3:
+        print("❌ Error: Password must be at least 3 characters")
+        sys.exit(1)
+    
     print(f"Creating test user...")
     print(f"  Username: {username}")
     print(f"  Email: {email}")

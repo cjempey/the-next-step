@@ -14,6 +14,7 @@ uv run uvicorn app.main:app --reload
 **Option A: Use get_token.sh script (easiest - for running server)**
 ```bash
 cd backend
+chmod +x scripts/get_token.sh  # Run once to make script executable
 ./scripts/get_token.sh cjempey cjempey
 
 # If user doesn't exist, create first:
@@ -76,11 +77,10 @@ Open http://localhost:5173 in your browser.
 - Archive values with confirmation dialog
 
 ### ✅ Archived Values Section
-- Separate section for archived values
+- Separate section for archived values (read-only historical journal)
 - Display created date
 - Show archive date placeholder (API doesn't track yet - see issue #16)
 - Show task count (hardcoded to 0 - Task API not implemented yet)
-- Unarchive functionality to restore values
 
 ### ✅ API Integration
 - Full Values API client with TypeScript types
