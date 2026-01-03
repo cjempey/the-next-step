@@ -4,7 +4,9 @@ on:
   push:
     branches: [main, develop]
   pull_request:
-    branches: [main, develop]
+    # Run on PRs to ANY branch (including feature branches)
+    # This ensures sub-PRs get checked before merging
+    branches: ['**']
 
 jobs:
   backend:
@@ -49,7 +51,7 @@ jobs:
       
       - name: Run type checking
         working-directory: backend
-        run: uv run pyright app/
+        run: uv run pyright
       
       - name: Run tests
         working-directory: backend

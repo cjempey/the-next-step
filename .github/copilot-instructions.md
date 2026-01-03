@@ -49,10 +49,22 @@ The goal is understanding **GitHub + Copilot workflows**, not mastering Python/J
 ### CI/CD Requirements
 
 **Before considering any work complete:**
-- Run all CI checks locally to ensure they pass
-- Verify linting, type checking, tests, and builds succeed
+- Run `./scripts/check-ci.sh` to validate all checks pass locally
+- **NEVER** push code that fails CI checks - validate locally first
+- **NEVER** merge PRs (including sub-PRs) without green CI checks
 - Do not rely on GitHub Actions to catch failures - validate locally first
-- This includes: backend tests, web tests, type checking, linting, etc.
+- This includes: backend tests, web tests, type checking, linting, builds
+
+**For sub-PRs targeting feature branches:**
+- Sub-PRs targeting feature branches MUST run CI checks locally before merging
+- Use `./scripts/check-ci.sh` to validate before creating PR
+- Even if GitHub Actions doesn't auto-run, you are responsible for validation
+- The feature branch PR will catch issues, but that's too late - catch them early
+
+**Quick check command:**
+```bash
+./scripts/check-ci.sh
+```
 
 ## Technical Debt Policy
 
