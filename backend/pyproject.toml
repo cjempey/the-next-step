@@ -21,7 +21,7 @@ dependencies = [
     # RECOMMENDATION: Migrate away from passlib to a more actively maintained solution
     # such as argon2-cffi (OWASP recommended) or using bcrypt directly.
     # This constraint may become problematic as bcrypt 4.x ages and security updates
-    # are only released for 5.x+. Track migration in a dedicated technical-debt issue.
+    # are only released for 5.x+. Migration tracked in issue #31.
     "bcrypt>=4.0.0,<5.0.0",
 ]
 
