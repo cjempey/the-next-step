@@ -2,6 +2,8 @@
 Value endpoints.
 """
 
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -160,8 +162,6 @@ async def archive_value(
     # Idempotent: only set archived_at if not already set
     # This preserves the original archive date for historical accuracy
     if not value.archived:
-        from datetime import datetime
-
         value.archived_at = datetime.utcnow()
         db.commit()
         db.refresh(value)

@@ -17,7 +17,7 @@ interface Value {
   statement: string
   archived: boolean  // Computed from archived_at (for convenience)
   created_at: string // ISO 8601 timestamp
-  archived_at?: string | null // ISO 8601 timestamp, null for active values
+  archived_at: string | null // ISO 8601 timestamp, null for active values (always present in API response)
 }
 
 interface AppState {

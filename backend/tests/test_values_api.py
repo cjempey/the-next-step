@@ -1,6 +1,7 @@
 """Tests for Values API endpoints."""
 
 import pytest
+from datetime import datetime
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -702,8 +703,6 @@ def test_hybrid_property_filtering_active_values():
     db.refresh(archived_value)
 
     # Archive one value
-    from datetime import datetime
-
     archived_value.archived_at = datetime.utcnow()
     db.commit()
     db.close()
@@ -733,8 +732,6 @@ def test_hybrid_property_filtering_archived_values():
     db.refresh(archived_value)
 
     # Archive one value
-    from datetime import datetime
-
     archived_value.archived_at = datetime.utcnow()
     db.commit()
     db.close()
@@ -769,8 +766,6 @@ def test_hybrid_property_returns_correct_boolean():
     assert active_value.archived_at is None
 
     # Archive the value
-    from datetime import datetime
-
     active_value.archived_at = datetime.utcnow()
     db.commit()
     db.refresh(active_value)
