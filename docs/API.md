@@ -173,7 +173,9 @@ Update a value's statement.
 
 **PATCH** `/values/{value_id}/archive`
 
-Archive (deactivate) a value. Archived values are excluded from the active values list but do not affect existing task-value links.
+Archive a value, making it part of your historical record ("Your Journey"). This is a **one-way operation** - archived values cannot be unarchived.
+
+To focus on an archived value again, use "Revisit" in the UI, which creates a new active value with the same statement via `POST /values`.
 
 **Path Parameters:**
 - `value_id` (integer) - The ID of the value to archive
@@ -191,8 +193,9 @@ Archive (deactivate) a value. Archived values are excluded from the active value
 **Notes:**
 - Archived values do not affect existing task-value associations
 - Tasks linked to archived values retain their links
-- Archived values can still be updated via PUT endpoint
-- Archived values are excluded from GET /values listing
+- Archived values are **immutable** - they preserve the historical record (see issue #15)
+- Archived values are excluded from `GET /values` unless `include_archived=true` is specified
+- This endpoint is idempotent - archiving an already-archived value succeeds without error
 
 **Error Responses:**
 - `401 Unauthorized` - Missing or invalid JWT token

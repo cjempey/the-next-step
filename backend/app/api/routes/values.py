@@ -123,7 +123,19 @@ async def archive_value(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Archive/deactivate a value for the authenticated user. Does not affect existing task-value links."""
+    """Archive a value, making it part of the user's historical record.
+
+    Archiving is a one-way operation - it preserves the value as part of
+    "Your Journey" showing when you focused on this value. Archived values
+    do not affect existing task-value links.
+
+    To focus on this value again in the future, create a new active value
+    with the same statement (UI provides "Revisit" button for this).
+
+    This endpoint is idempotent - archiving an already-archived value succeeds
+    without error. Issue #16 will enhance this by adding an archived_at
+    timestamp while preserving idempotency.
+    """
     value = (
         db.query(Value)
         .filter(Value.id == value_id, Value.user_id == current_user.id)

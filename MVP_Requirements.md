@@ -106,10 +106,15 @@ Support neurodivergent adults (primarily autistic and ADHD individuals) in **exe
 
 ### 4.3 Value Lifecycle
 
-- Values can be archived/deactivated
+- Values can be archived when no longer actively prioritized
+- **Archiving is permanent** - archived values become part of "Your Journey" (historical record)
 - Archived values do not affect existing task-value links
 - Tasks linked to archived values are not automatically changed
 - User can manually update task-value links if needed
+- **To focus on a past value again**: Use "Revisit" to create a new active value with the same statement
+  - This creates a fresh start while preserving the historical record
+  - Example: "Health is my priority" archived in March → Revisit in June creates new active value
+  - The original archived value remains in "Your Journey" showing when you focused on this value
 
 ---
 
