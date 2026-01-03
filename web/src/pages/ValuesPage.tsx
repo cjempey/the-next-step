@@ -382,12 +382,16 @@ export default function ValuesPage() {
                 }}
               >
                 From {new Date(value.created_at).toLocaleDateString()} to{' '}
-                <span 
-                  style={{ color: '#999' }}
-                  title="Archive date tracking is coming soon"
-                >
-                  (archive date coming soon)
-                </span>
+                {value.archived_at ? (
+                  new Date(value.archived_at).toLocaleDateString()
+                ) : (
+                  <span 
+                    style={{ color: '#999' }}
+                    title="Archive date not recorded for this value"
+                  >
+                    (date not recorded)
+                  </span>
+                )}
                 , you valued{' '}
                 <strong style={{ color: '#333', fontStyle: 'normal' }}>
                   &quot;{value.statement}&quot;

@@ -15,7 +15,9 @@ interface Task {
 interface Value {
   id: number
   statement: string
-  archived: boolean
+  archived: boolean  // Computed from archived_at (for convenience)
+  created_at: string // ISO 8601 timestamp
+  archived_at?: string | null // ISO 8601 timestamp, null for active values
 }
 
 interface AppState {
