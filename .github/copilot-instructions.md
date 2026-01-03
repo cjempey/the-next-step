@@ -127,3 +127,139 @@ Context for the developer (JVM analogies if helpful)
 ✅ Good: "In Python, we use `pytest` fixtures (like JUnit's `@Before`) but they're more powerful - they can be scoped per function/class/module and have automatic cleanup"
 
 ❌ Less helpful: "Add a pytest fixture"
+
+---
+
+## Guidelines for Working with GitHub Copilot Coding Agent
+
+### Issue Guidelines
+
+When creating issues for Copilot to work on, follow these best practices:
+
+**Well-Scoped Issues:**
+- Clearly specify the problem or requested feature
+- Define acceptance criteria (should there be tests? what makes a solution "good"?)
+- Specify which files or parts of the codebase need to be changed
+- Provide relevant context and constraints
+- Well-written issues work as strong AI prompts for Copilot
+
+**Example Good Issue:**
+```markdown
+## Problem
+The API returns 500 errors when a user tries to fetch tasks without being authenticated.
+
+## Expected Behavior
+- Return 401 Unauthorized with a clear error message
+- Include WWW-Authenticate header
+
+## Files to Change
+- backend/app/api/tasks.py
+- backend/tests/test_tasks.py (add test case)
+
+## Acceptance Criteria
+- [ ] Returns 401 status code for unauthenticated requests
+- [ ] Includes WWW-Authenticate header
+- [ ] Test case added and passing
+- [ ] CI/CD passes
+```
+
+### Task Selection Guidelines
+
+**Good Tasks for Copilot** (routine, well-defined, low-to-medium complexity):
+- Fixing bugs with clear reproduction steps
+- Refactoring code (renaming, extracting functions, improving structure)
+- Incremental feature improvements
+- Improving documentation or test coverage
+- Addressing technical debt with clear scope
+- Adding logging or error handling
+- Updating dependencies (with security checks)
+
+**Tasks to Handle Yourself** (require human judgment):
+- Ambiguous requirements needing stakeholder clarification
+- Business-critical features with high-stakes consequences
+- Deep domain knowledge or architectural decisions
+- Heavy cross-repository changes
+- Security-sensitive operations beyond standard practices
+- Performance optimizations requiring profiling and analysis
+
+### Code Review and Iteration Workflow
+
+**Treat Copilot as a Collaborator:**
+- Always review all pull requests before merging
+- Use PR comments to guide improvements - you can @mention @copilot in PR comments
+- Iterate until the solution meets quality standards
+- Don't merge incomplete or low-quality solutions just because they were AI-generated
+
+**Effective PR Review Comments:**
+- Be specific about what needs to change
+- Provide examples when possible
+- Reference coding standards or existing patterns
+- Ask questions to clarify intent
+
+**Example PR Comments:**
+```markdown
+@copilot The error handling here doesn't follow our pattern. Please:
+1. Use the `handle_api_error` helper from `app/utils/errors.py`
+2. Log the error with context before returning the response
+3. Add a test case for this error scenario
+```
+
+### Repository Structure and Context
+
+**Project Overview:**
+- Full-stack application with backend (FastAPI/Python), web (React/TypeScript), and mobile (React Native)
+- Focus on task management with AI-driven suggestions
+- Target users: neurodivergent individuals needing reduced cognitive burden
+
+**Key Directories:**
+- `backend/` - Python FastAPI application with SQLAlchemy ORM
+- `web/` - React TypeScript application with Vite build
+- `mobile/` - React Native TypeScript application
+- `docs/` - Architecture and design documentation
+- `scripts/` - Development and CI/CD helper scripts
+
+**Important Files:**
+- `MVP_Requirements.md` - Product specification and features
+- `scripts/check-ci.sh` - Local CI validation script
+- `.github/workflows/ci.yml` - CI/CD pipeline configuration
+
+**Development Commands:**
+- Backend: `cd backend && uv pip install -r requirements.txt && pytest`
+- Web: `cd web && npm install && npm run dev`
+- Full CI Check: `./scripts/check-ci.sh`
+
+**Code Organization Patterns:**
+- Backend: Follow FastAPI's dependency injection pattern
+- Testing: pytest for backend, Jest/React Testing Library for web (TBD)
+- Type Safety: Use pyright for Python, TypeScript strict mode for frontend
+- Error Handling: Centralized error handlers in backend, consistent error responses
+
+### Branch and PR Conventions
+
+**Branch Naming:**
+- Copilot automatically creates branches with `copilot/` prefix
+- Feature branches: `feature/description`
+- Bug fixes: `fix/description`
+- Documentation: `docs/description`
+
+**PR Guidelines:**
+- All PRs must pass CI/CD before merging
+- Sub-PRs to feature branches must validate CI locally
+- Include clear description of changes and why they were made
+- Link to related issues
+- Request review from @cjempey for architectural or business logic questions
+
+### Security and Quality Standards
+
+**Before Merging:**
+- All tests pass locally and in CI
+- No linting or type checking errors
+- Code follows existing patterns and conventions
+- Security vulnerabilities addressed (Copilot runs security checks)
+- No sensitive data or secrets in code
+
+**When Copilot Identifies Issues:**
+- Review security alerts carefully
+- Fix vulnerabilities in code you're changing
+- Create issues for unrelated vulnerabilities (don't expand scope)
+- Document decisions if choosing to defer a fix
