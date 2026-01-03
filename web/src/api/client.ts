@@ -8,6 +8,19 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 // To generate: Register a test user and login via backend API
 const TEMP_AUTH_TOKEN = import.meta.env.VITE_AUTH_TOKEN || ''
 
+// Warn developer if token is missing (better DX during setup)
+if (!TEMP_AUTH_TOKEN) {
+  console.warn(
+    '⚠️ VITE_AUTH_TOKEN is not set. API requests will fail with 401 errors.\n' +
+    'To fix this:\n' +
+    '1. Copy web/.env.example to web/.env\n' +
+    '2. Start the backend: cd backend && uv run uvicorn app.main:app --reload\n' +
+    '3. Generate a token: cd backend && ./scripts/get_token.sh\n' +
+    '4. Add the token to web/.env as VITE_AUTH_TOKEN=<your-token>\n' +
+    '5. Restart the web dev server'
+  )
+}
+
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {

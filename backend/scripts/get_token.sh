@@ -5,8 +5,19 @@
 # Usage: ./scripts/get_token.sh [username] [password]
 #
 
-USERNAME="${1:-cjempey}"
-PASSWORD="${2:-cjempey}"
+# Check if python3 is available (needed for JSON parsing)
+if ! command -v python3 &> /dev/null; then
+    echo "❌ Error: python3 is required but not found in PATH"
+    echo
+    echo "This script uses python3 to parse JSON responses."
+    echo "Please install python3, or use an alternative JSON parser like 'jq':"
+    echo "  TOKEN=\$(echo \"\$RESPONSE\" | jq -r '.access_token')"
+    echo
+    exit 1
+fi
+
+USERNAME="${1:-testuser}"
+PASSWORD="${2:-testpass}"
 
 echo "Logging in as ${USERNAME}..."
 echo
