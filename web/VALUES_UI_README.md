@@ -15,12 +15,12 @@ uv run uvicorn app.main:app --reload
 ```bash
 cd backend
 chmod +x scripts/get_token.sh  # Run once to make script executable
-./scripts/get_token.sh cjempey cjempey
+./scripts/get_token.sh testuser testpass
 
 # If user doesn't exist, create first:
 # curl -X POST http://localhost:8000/api/auth/register \
 #   -H "Content-Type: application/json" \
-#   -d '{"username":"cjempey","email":"cjempey@gmail.com","password":"cjempey"}'
+#   -d '{"username":"testuser","email":"test@example.com","password":"testpass"}'
 ```
 
 The script will output a JWT token. Copy it for step 3.
@@ -28,7 +28,7 @@ The script will output a JWT token. Copy it for step 3.
 **Option B: Use create_test_user.py (if backend NOT running yet)**
 ```bash
 cd backend
-uv run python scripts/create_test_user.py cjempey cjempey@gmail.com cjempey
+uv run python scripts/create_test_user.py testuser test@example.com testpass
 
 # Then start backend server
 # Note: Script generates token using .env JWT_SECRET_KEY
@@ -40,7 +40,7 @@ uv run python scripts/create_test_user.py cjempey cjempey@gmail.com cjempey
 # Login to get JWT token
 curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"cjempey","password":"cjempey"}'
+  -d '{"username":"testuser","password":"testpass"}'
 
 # Copy the "access_token" value from the response
 ```

@@ -3,6 +3,21 @@ import axios from 'axios'
 import { valueApi } from '../api/client'
 import type { Value, ValueCreate } from '../types/value'
 
+// Shared validation function for value statements
+function validateValueStatement(statement: string): string | null {
+  const trimmed = statement.trim()
+  
+  if (!trimmed) {
+    return 'Value statement cannot be empty'
+  }
+  
+  if (trimmed.length > 255) {
+    return 'Value statement must be 255 characters or less'
+  }
+  
+  return null
+}
+
 export default function ValuesPage() {
   const [activeValues, setActiveValues] = useState<Value[]>([])
   const [archivedValues, setArchivedValues] = useState<Value[]>([])
@@ -45,17 +60,14 @@ export default function ValuesPage() {
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
+    
+    const validationError = validateValueStatement(newValueStatement)
+    if (validationError) {
+      setError(validationError)
+      return
+    }
+
     const trimmed = newValueStatement.trim()
-    
-    if (!trimmed) {
-      setError('Value statement cannot be empty')
-      return
-    }
-    
-    if (trimmed.length > 255) {
-      setError('Value statement must be 255 characters or less')
-      return
-    }
 
     try {
       const payload: ValueCreate = { statement: trimmed }
@@ -85,17 +97,13 @@ export default function ValuesPage() {
   }
 
   const handleSaveEdit = async (id: number) => {
+    const validationError = validateValueStatement(editStatement)
+    if (validationError) {
+      setError(validationError)
+      return
+    }
+
     const trimmed = editStatement.trim()
-    
-    if (!trimmed) {
-      setError('Value statement cannot be empty')
-      return
-    }
-    
-    if (trimmed.length > 255) {
-      setError('Value statement must be 255 characters or less')
-      return
-    }
 
     try {
       setError(null)
@@ -222,6 +230,11 @@ export default function ValuesPage() {
                       type="text"
                       value={editStatement}
                       onChange={(e) => setEditStatement(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          handleCancelEdit()
+                        }
+                      }}
                       maxLength={255}
                       aria-label="Edit value statement"
                       style={{
@@ -277,6 +290,7 @@ export default function ValuesPage() {
                     <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.9rem' }}>
                       <button
                         onClick={() => handleStartEdit(value)}
+                        aria-label={`Edit value: ${value.statement}`}
                         style={{
                           padding: '0.25rem 0.75rem',
                           backgroundColor: '#f0f0f0',
@@ -291,6 +305,7 @@ export default function ValuesPage() {
                         <>
                           <button
                             onClick={() => handleArchive(value.id)}
+                            aria-label={`Confirm archive of value: ${value.statement}`}
                             style={{
                               padding: '0.25rem 0.75rem',
                               backgroundColor: '#c00',
@@ -304,6 +319,7 @@ export default function ValuesPage() {
                           </button>
                           <button
                             onClick={() => setArchiveConfirmId(null)}
+                            aria-label={`Cancel archive of value: ${value.statement}`}
                             style={{
                               padding: '0.25rem 0.75rem',
                               backgroundColor: '#ccc',
@@ -319,6 +335,7 @@ export default function ValuesPage() {
                       ) : (
                         <button
                           onClick={() => setArchiveConfirmId(value.id)}
+                          aria-label={`Archive value: ${value.statement}`}
                           style={{
                             padding: '0.25rem 0.75rem',
                             backgroundColor: '#f0f0f0',
