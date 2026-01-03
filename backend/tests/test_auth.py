@@ -57,10 +57,10 @@ def clean_database():
         db.commit()
     finally:
         db.close()
-    
+
     # Yield to run the test
     yield
-    
+
     # Clean up after test as well
     db = TestingSessionLocal()
     try:
@@ -256,12 +256,12 @@ class TestJWTTokenHandling:
         )
 
         token = register_response.json()["access_token"]
-        
+
         # Decode token and verify 'sub' is a string
         payload = decode_access_token(token)
         assert "sub" in payload
         assert isinstance(payload["sub"], str)
-        
+
         # Verify it can be converted back to int
         user_id = int(payload["sub"])
         assert user_id > 0
@@ -279,7 +279,7 @@ class TestJWTTokenHandling:
         )
 
         token = register_response.json()["access_token"]
-        
+
         # Use token to access authenticated endpoint (values API)
         response = client.get(
             "/api/values",
@@ -317,7 +317,7 @@ class TestJWTTokenHandling:
         )
 
         token = register_response.json()["access_token"]
-        
+
         # Create a value using the token (exercises get_current_user)
         # If get_current_user string-to-int conversion fails, this will return 401
         response = client.post(
@@ -335,7 +335,7 @@ class TestJWTTokenHandling:
         """Test that token with non-integer user ID is rejected."""
         # Create token with invalid user ID format
         invalid_token = create_access_token(data={"sub": "not-a-number"})
-        
+
         response = client.get(
             "/api/values",
             headers={"Authorization": f"Bearer {invalid_token}"},
