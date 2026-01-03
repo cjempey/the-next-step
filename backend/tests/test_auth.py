@@ -1,14 +1,17 @@
 """Tests for authentication flows: registration, login, and JWT token handling."""
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.api.routes import auth as auth_routes
+from app.api.routes import values as values_routes
+from app.auth import create_access_token, decode_access_token, hash_password
 from app.core.database import get_db
 from app.models import Base, User
-from app.auth import create_access_token, decode_access_token, hash_password
 
 # Create a separate in-memory database for auth tests
 # Use a unique name to avoid conflicts with other test files
@@ -26,19 +29,14 @@ Base.metadata.create_all(bind=engine)
 
 def override_get_db():
     """Override database dependency for testing."""
+    db = TestingSessionLocal()
     try:
-        db = TestingSessionLocal()
         yield db
     finally:
         db.close()
 
 
 # Create a test-specific app instance to avoid conflicts with other test files
-# We need to override dependencies on a fresh app instance
-from fastapi import FastAPI
-from app.api.routes import auth as auth_routes, values as values_routes
-
-# Create minimal test app with only the routes we need
 test_app = FastAPI()
 test_app.include_router(auth_routes.router, prefix="/api/auth", tags=["auth"])
 test_app.include_router(values_routes.router, prefix="/api/values", tags=["values"])

@@ -31,8 +31,8 @@ _test_user_data = None
 
 def override_get_db():
     """Override database dependency for testing."""
+    db = TestingSessionLocal()
     try:
-        db = TestingSessionLocal()
         yield db
     finally:
         db.close()
@@ -571,6 +571,7 @@ def test_archive_value_doesnt_affect_tasks():
     db = TestingSessionLocal()
     try:
         task = db.query(Task).filter(Task.id == task_id).first()
+        assert task is not None
         assert len(task.values) == 1
         assert task.values[0].id == value_id
         assert task.values[0].archived is True

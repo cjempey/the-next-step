@@ -99,7 +99,7 @@ def main():
         print("❌ Error: Password must be at least 3 characters")
         sys.exit(1)
     
-    print(f"Creating test user...")
+    print("Creating test user...")
     print(f"  Username: {username}")
     print(f"  Email: {email}")
     print(f"  Password: {'*' * len(password)}")
