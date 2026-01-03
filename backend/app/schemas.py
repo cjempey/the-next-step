@@ -109,12 +109,17 @@ class ValueCreate(BaseModel):
 
 
 class ValueResponse(BaseModel):
-    """Value response."""
+    """Value response.
+    
+    Returns both the computed 'archived' boolean (for client convenience)
+    and the 'archived_at' timestamp (source of truth for archive status).
+    """
 
     id: int
     statement: str
-    archived: bool
+    archived: bool  # Computed from archived_at via hybrid property
     created_at: datetime
+    archived_at: Optional[datetime] = None  # NULL for active values
 
     class Config:
         from_attributes = True

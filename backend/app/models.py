@@ -16,6 +16,7 @@ from sqlalchemy import (
     JSON,
 )
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.hybrid import hybrid_property
 import enum
 
 from app.core.database import Base
@@ -113,18 +114,46 @@ class Task(Base):
 
 
 class Value(Base):
-    """User-defined value model."""
+    """User-defined value model.
+    
+    The archived state is tracked via the archived_at timestamp:
+    - archived_at = NULL: value is active
+    - archived_at != NULL: value is archived (with timestamp of when it was archived)
+    
+    The hybrid property 'archived' provides a convenient boolean interface
+    for Python code and SQL queries, computed from archived_at.
+    """
 
     __tablename__ = "values"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     statement = Column(String(255), nullable=False)
-    archived = Column(Boolean, nullable=False, default=False)
+    archived_at = Column(DateTime, nullable=True)  # NULL = active, NOT NULL = archived
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(
         DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
     )
+
+    # Computed property for backward compatibility and ergonomics
+    @hybrid_property
+    def archived(self) -> bool:
+        """Return True if value is archived (has archived_at timestamp).
+        
+        This provides a convenient boolean interface in Python code:
+            if value.archived: ...
+        """
+        return self.archived_at is not None
+    
+    @archived.expression
+    def archived(cls):
+        """SQL expression for filtering by archived status.
+        
+        This enables filtering in queries:
+            query.filter(~Value.archived)  # active values only
+            query.filter(Value.archived)   # archived values only
+        """
+        return cls.archived_at.isnot(None)
 
     # Relationships
     tasks = relationship(
