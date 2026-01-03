@@ -124,15 +124,15 @@ async def archive_value(
     current_user: User = Depends(get_current_active_user),
 ):
     """Archive a value, making it part of the user's historical record.
-    
-    Archiving is a one-way operation - it preserves the value as part of 
-    "Your Journey" showing when you focused on this value. Archived values 
+
+    Archiving is a one-way operation - it preserves the value as part of
+    "Your Journey" showing when you focused on this value. Archived values
     do not affect existing task-value links.
-    
-    To focus on this value again in the future, create a new active value 
+
+    To focus on this value again in the future, create a new active value
     with the same statement (UI provides "Revisit" button for this).
-    
-    Note: Current implementation will be updated in #16 to set archived_at 
+
+    Note: Current implementation will be updated in #16 to set archived_at
     timestamp and become idempotent.
     """
     value = (
