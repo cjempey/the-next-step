@@ -132,8 +132,9 @@ async def archive_value(
     To focus on this value again in the future, create a new active value
     with the same statement (UI provides "Revisit" button for this).
 
-    Note: Current implementation will be updated in #16 to set archived_at
-    timestamp and become idempotent.
+    This endpoint is idempotent - archiving an already-archived value succeeds
+    without error. Issue #16 will enhance this by adding an archived_at
+    timestamp while preserving idempotency.
     """
     value = (
         db.query(Value)
