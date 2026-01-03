@@ -14,8 +14,15 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "openai>=1.3.6",
     "python-jose[cryptography]>=3.5.0",
-    "passlib>=1.7.4",
-    "bcrypt>=5.0.0",
+    "passlib[bcrypt]>=1.7.4",
+    # TECHNICAL-DEBT: bcrypt is pinned to <5.0.0 for passlib 1.7.4 compatibility.
+    # passlib 1.7.4 uses a deprecated bcrypt API that was removed in 5.x.
+    # passlib 1.7.4 (released 2020) is no longer actively maintained.
+    # RECOMMENDATION: Migrate away from passlib to a more actively maintained solution
+    # such as argon2-cffi (OWASP recommended) or using bcrypt directly.
+    # This constraint may become problematic as bcrypt 4.x ages and security updates
+    # are only released for 5.x+. Migration tracked in issue #31.
+    "bcrypt>=4.0.0,<5.0.0",
 ]
 
 [dependency-groups]

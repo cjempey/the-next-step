@@ -49,7 +49,11 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 def decode_access_token(token: str) -> dict:
     """Decode and validate a JWT token."""
     try:
-        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            token,
+            settings.JWT_SECRET_KEY,
+            algorithms=[ALGORITHM],
+        )
         return payload
     except JWTError:
         raise HTTPException(
@@ -67,8 +71,18 @@ async def get_current_user(
     token = credentials.credentials
     payload = decode_access_token(token)
 
-    user_id = payload.get("sub")
-    if user_id is None or not isinstance(user_id, int):
+    user_id_str = payload.get("sub")
+    if user_id_str is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Convert string user ID back to integer
+    try:
+        user_id = int(user_id_str)
+    except (ValueError, TypeError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",

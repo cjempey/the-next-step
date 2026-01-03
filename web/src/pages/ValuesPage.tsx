@@ -1,0 +1,410 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import axios from 'axios'
+import { valueApi } from '../api/client'
+import type { Value, ValueCreate } from '../types/value'
+
+// Shared validation function for value statements
+function validateValueStatement(statement: string): string | null {
+  const trimmed = statement.trim()
+  
+  if (!trimmed) {
+    return 'Value statement cannot be empty'
+  }
+  
+  if (trimmed.length > 255) {
+    return 'Value statement must be 255 characters or less'
+  }
+  
+  return null
+}
+
+export default function ValuesPage() {
+  const [activeValues, setActiveValues] = useState<Value[]>([])
+  const [archivedValues, setArchivedValues] = useState<Value[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [newValueStatement, setNewValueStatement] = useState('')
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editStatement, setEditStatement] = useState('')
+  const [archiveConfirmId, setArchiveConfirmId] = useState<number | null>(null)
+  const editInputRef = useRef<HTMLInputElement>(null)
+
+  const loadValues = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      // Fetch all values (active and archived)
+      const response = await valueApi.list(true)
+      const allValues = response.data
+      
+      // Separate active and archived
+      setActiveValues(allValues.filter(v => !v.archived))
+      setArchivedValues(allValues.filter(v => v.archived))
+    } catch (err) {
+      // Extract backend validation messages for better user feedback
+      if (axios.isAxiosError(err) && err.response?.data?.detail) {
+        setError(err.response.data.detail)
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to load values')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadValues()
+  }, [loadValues])
+
+  const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setError(null)
+    
+    const validationError = validateValueStatement(newValueStatement)
+    if (validationError) {
+      setError(validationError)
+      return
+    }
+
+    const trimmed = newValueStatement.trim()
+
+    try {
+      const payload: ValueCreate = { statement: trimmed }
+      await valueApi.create(payload)
+      setNewValueStatement('')
+      await loadValues()
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.data?.detail) {
+        setError(err.response.data.detail)
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to create value')
+      }
+    }
+  }
+
+  const handleStartEdit = (value: Value) => {
+    setError(null)
+    setEditingId(value.id)
+    setEditStatement(value.statement)
+    // Auto-focus the edit input after state updates
+    setTimeout(() => editInputRef.current?.focus(), 0)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingId(null)
+    setEditStatement('')
+  }
+
+  const handleSaveEdit = async (id: number) => {
+    const validationError = validateValueStatement(editStatement)
+    if (validationError) {
+      setError(validationError)
+      return
+    }
+
+    const trimmed = editStatement.trim()
+
+    try {
+      setError(null)
+      await valueApi.update(id, { statement: trimmed })
+      setEditingId(null)
+      setEditStatement('')
+      await loadValues()
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.data?.detail) {
+        setError(err.response.data.detail)
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to update value')
+      }
+    }
+  }
+
+  const handleArchive = async (id: number) => {
+    try {
+      setError(null)
+      await valueApi.archive(id)
+      setArchiveConfirmId(null)
+      await loadValues()
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.data?.detail) {
+        setError(err.response.data.detail)
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to archive value')
+      }
+    }
+  }
+
+  if (loading) {
+    return <div style={{ padding: '2rem' }}>Loading values...</div>
+  }
+
+  return (
+    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
+      <h1>My Values</h1>
+      <p style={{ color: '#666', marginBottom: '2rem' }}>
+        What matters most to you? Define and prioritize your personal values.
+      </p>
+
+      {error && (
+        <div style={{ 
+          padding: '1rem', 
+          marginBottom: '1rem', 
+          backgroundColor: '#fee', 
+          border: '1px solid #fcc',
+          borderRadius: '4px',
+          color: '#c00'
+        }}>
+          {error}
+        </div>
+      )}
+
+      {/* Create New Value */}
+      <form onSubmit={handleCreate} style={{ marginBottom: '2rem' }}>
+        <h2>Add New Value</h2>
+        <label htmlFor="new-value-input" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+          Value Statement
+        </label>
+        <input
+          id="new-value-input"
+          type="text"
+          value={newValueStatement}
+          onChange={(e) => setNewValueStatement(e.target.value)}
+          placeholder="e.g., I prioritize my health and wellbeing"
+          maxLength={255}
+          style={{
+            width: '100%',
+            padding: '0.75rem',
+            fontSize: '1rem',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            marginBottom: '0.5rem'
+          }}
+        />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <small style={{ color: '#666' }}>
+            {newValueStatement.trim().length}/255 characters
+          </small>
+          <button
+            type="submit"
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: '#0066cc',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '1rem'
+            }}
+          >
+            Add Value
+          </button>
+        </div>
+      </form>
+
+      {/* Active Values */}
+      <section style={{ marginBottom: '3rem' }}>
+        <h2>Active Values</h2>
+        {activeValues.length === 0 ? (
+          <p style={{ color: '#666', fontStyle: 'italic' }}>
+            No active values yet. Add one above to get started.
+          </p>
+        ) : (
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            {activeValues.map((value) => (
+              <li
+                key={value.id}
+                style={{
+                  padding: '1rem',
+                  marginBottom: '0.5rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  backgroundColor: '#fff'
+                }}
+              >
+                {editingId === value.id ? (
+                  // Edit mode
+                  <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(value.id); }}>
+                    <input
+                      ref={editInputRef}
+                      type="text"
+                      value={editStatement}
+                      onChange={(e) => setEditStatement(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          handleCancelEdit()
+                        }
+                      }}
+                      maxLength={255}
+                      aria-label="Edit value statement"
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        fontSize: '1rem',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                        marginBottom: '0.5rem'
+                      }}
+                    />
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <small style={{ color: '#666' }}>
+                        {editStatement.trim().length}/255 characters
+                      </small>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                          type="submit"
+                          style={{
+                            padding: '0.5rem 1rem',
+                            backgroundColor: '#0066cc',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCancelEdit}
+                          style={{
+                            padding: '0.5rem 1rem',
+                            backgroundColor: '#ccc',
+                            color: '#333',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                ) : (
+                  // View mode
+                  <div>
+                    <div style={{ marginBottom: '0.5rem', fontSize: '1.1rem' }}>
+                      {value.statement}
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.9rem' }}>
+                      <button
+                        onClick={() => handleStartEdit(value)}
+                        aria-label={`Edit value: ${value.statement}`}
+                        style={{
+                          padding: '0.25rem 0.75rem',
+                          backgroundColor: '#f0f0f0',
+                          border: '1px solid #ccc',
+                          borderRadius: '4px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Edit
+                      </button>
+                      {archiveConfirmId === value.id ? (
+                        <>
+                          <button
+                            onClick={() => handleArchive(value.id)}
+                            aria-label={`Confirm archive of value: ${value.statement}`}
+                            style={{
+                              padding: '0.25rem 0.75rem',
+                              backgroundColor: '#c00',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Confirm Archive
+                          </button>
+                          <button
+                            onClick={() => setArchiveConfirmId(null)}
+                            aria-label={`Cancel archive of value: ${value.statement}`}
+                            style={{
+                              padding: '0.25rem 0.75rem',
+                              backgroundColor: '#ccc',
+                              color: '#333',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => setArchiveConfirmId(value.id)}
+                          aria-label={`Archive value: ${value.statement}`}
+                          style={{
+                            padding: '0.25rem 0.75rem',
+                            backgroundColor: '#f0f0f0',
+                            border: '1px solid #ccc',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Archive
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* Archived Values - Historical Journal */}
+      <section>
+        <h2>Your Journey</h2>
+        <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>
+          A record of the values that shaped your path.
+        </p>
+        {archivedValues.length === 0 ? (
+          <p style={{ color: '#666', fontStyle: 'italic' }}>
+            No archived values yet. As you evolve, archived values will appear here as a record of your journey.
+          </p>
+        ) : (
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            {archivedValues.map((value) => (
+              <li
+                key={value.id}
+                style={{
+                  padding: '1rem',
+                  marginBottom: '0.5rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  backgroundColor: '#f9f9f9',
+                  fontStyle: 'italic',
+                  color: '#666'
+                }}
+              >
+                From {new Date(value.created_at).toLocaleDateString()} to{' '}
+                <span 
+                  style={{ color: '#999' }}
+                  title="Archive date tracking is coming soon"
+                >
+                  (archive date coming soon)
+                </span>
+                , you valued{' '}
+                <strong style={{ color: '#333', fontStyle: 'normal' }}>
+                  &quot;{value.statement}&quot;
+                </strong>
+                , with{' '}
+                <span 
+                  style={{ color: '#999' }}
+                  title="Task history for archived values will be added in a future update"
+                >
+                  task history coming soon
+                </span>
+                .
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  )
+}

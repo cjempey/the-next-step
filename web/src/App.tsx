@@ -1,12 +1,17 @@
+import ValuesPage from './pages/ValuesPage'
+
 function App() {
   return (
-    <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h1>The Next Step</h1>
-      <p>Morning Planning, &quot;What Next?&quot; Suggestions, and Evening Review</p>
-      <p style={{ color: '#666', marginTop: '2rem' }}>
-        Scaffolds for: Morning Planning | What Next? | What Was I Doing? | Evening Review
-      </p>
-      {/* TODO: Implement pages and components */}
+    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+      <nav style={{ 
+        padding: '1rem 2rem', 
+        backgroundColor: 'white', 
+        borderBottom: '1px solid #ddd',
+        marginBottom: '0'
+      }}>
+        <h1 style={{ margin: 0, fontSize: '1.5rem' }}>The Next Step</h1>
+      </nav>
+      <ValuesPage />
     </div>
   )
 }
