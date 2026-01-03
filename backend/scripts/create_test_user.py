@@ -50,7 +50,7 @@ def create_test_user(
         existing_user = db.query(User).filter(User.username == username).first()
         if existing_user:
             print(f"⚠️  User '{username}' already exists. Generating token for existing user...")
-            access_token = create_access_token(data={"sub": existing_user.id})
+            access_token = create_access_token(data={"sub": str(existing_user.id)})
             return existing_user, access_token
         
         # Create new user
@@ -65,7 +65,7 @@ def create_test_user(
         db.refresh(new_user)
         
         # Generate JWT token
-        access_token = create_access_token(data={"sub": new_user.id})
+        access_token = create_access_token(data={"sub": str(new_user.id)})
         
         print(f"✅ User '{username}' created successfully!")
         return new_user, access_token
