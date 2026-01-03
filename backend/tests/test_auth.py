@@ -6,7 +6,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.main import app as main_app
 from app.core.database import get_db
 from app.models import Base, User
 from app.auth import create_access_token, decode_access_token, hash_password
