@@ -195,11 +195,8 @@ def test_api_response_contains_z_suffix():
 
     data = response.json()
 
-    # Verify created_at has timezone (ends with Z or has +/- offset)
+    # Verify created_at has 'Z' suffix (our implementation uses UTC with Z)
     created_at = data["created_at"]
-    assert created_at.endswith("Z") or "+" in created_at or (created_at.count("-") > 2)
-
-    # Specifically check for Z suffix (our implementation)
     assert created_at.endswith("Z"), f"Expected 'Z' suffix, got: {created_at}"
 
     # Archive the value

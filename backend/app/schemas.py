@@ -18,7 +18,7 @@ def ensure_utc_timezone(v: Optional[datetime]) -> Optional[datetime]:
     if v is None:
         return None
     if not isinstance(v, datetime):
-        return v
+        raise TypeError(f"Expected datetime or None, got {type(v).__name__}")
     # If naive, assume UTC
     if v.tzinfo is None:
         return v.replace(tzinfo=timezone.utc)
