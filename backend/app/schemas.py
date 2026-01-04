@@ -8,26 +8,41 @@ from typing import Optional, Annotated
 from pydantic import BaseModel, Field, BeforeValidator, PlainSerializer
 
 
-def ensure_utc_timezone(v: datetime) -> datetime:
+def ensure_utc_timezone(v: Optional[datetime]) -> Optional[datetime]:
     """Ensure datetime has UTC timezone for proper serialization.
 
     SQLite DateTime columns return naive datetimes. This validator adds
-    UTC timezone info so they serialize correctly with 'Z' suffix.
+    UTC timezone info so they serialize correctly with timezone suffix.
+    Converts non-UTC aware datetimes to UTC.
     """
-    if v is not None and isinstance(v, datetime) and v.tzinfo is None:
+    if v is None:
+        return None
+    if not isinstance(v, datetime):
+        return v
+    # If naive, assume UTC
+    if v.tzinfo is None:
         return v.replace(tzinfo=timezone.utc)
+    # If already aware but not UTC, convert to UTC
+    if v.tzinfo != timezone.utc:
+        return v.astimezone(timezone.utc)
     return v
 
 
-def serialize_datetime_with_z(v: datetime) -> str:
-    """Serialize datetime as ISO string with 'Z' suffix for UTC."""
+def serialize_datetime_with_z(v: Optional[datetime]) -> Optional[str]:
+    """Serialize datetime as ISO 8601 string with timezone info.
+
+    Uses second precision for consistent formatting.
+    Returns format like '2026-01-04T07:08:00Z' for UTC times.
+    """
     if v is None:
         return None
-    # Ensure UTC timezone
+    # Ensure UTC timezone (defensive, should already be handled by validator)
     if v.tzinfo is None:
         v = v.replace(tzinfo=timezone.utc)
-    # Serialize with Z suffix
-    return v.isoformat().replace("+00:00", "Z")
+    elif v.tzinfo != timezone.utc:
+        v = v.astimezone(timezone.utc)
+    # Serialize with second precision and Z suffix for UTC
+    return v.isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
 # Custom datetime type that always serializes with timezone
