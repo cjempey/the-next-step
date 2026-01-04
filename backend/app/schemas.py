@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, BeforeValidator, PlainSerializer
 
 def ensure_utc_timezone(v: datetime) -> datetime:
     """Ensure datetime has UTC timezone for proper serialization.
-    
+
     SQLite DateTime columns return naive datetimes. This validator adds
     UTC timezone info so they serialize correctly with 'Z' suffix.
     """
@@ -27,14 +27,14 @@ def serialize_datetime_with_z(v: datetime) -> str:
     if v.tzinfo is None:
         v = v.replace(tzinfo=timezone.utc)
     # Serialize with Z suffix
-    return v.isoformat().replace('+00:00', 'Z')
+    return v.isoformat().replace("+00:00", "Z")
 
 
 # Custom datetime type that always serializes with timezone
 AwareDatetime = Annotated[
     datetime,
     BeforeValidator(ensure_utc_timezone),
-    PlainSerializer(serialize_datetime_with_z, return_type=str, when_used='json'),
+    PlainSerializer(serialize_datetime_with_z, return_type=str, when_used="json"),
 ]
 
 
