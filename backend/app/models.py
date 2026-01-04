@@ -2,7 +2,7 @@
 SQLAlchemy ORM models.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import (
     Column,
     Integer,
@@ -96,9 +96,14 @@ class Task(Base):
     )
     completion_percentage = Column(Integer, nullable=True, default=0)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
     completed_at = Column(DateTime, nullable=True)
     parent_task_id = Column(
@@ -130,9 +135,14 @@ class Value(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     statement = Column(String(255), nullable=False)
     archived_at = Column(DateTime, nullable=True)  # NULL = active, NOT NULL = archived
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Computed property for backward compatibility and ergonomics
@@ -170,7 +180,9 @@ class RejectionDampening(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False)
-    rejected_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    rejected_at = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
     expires_at = Column(String(50), nullable=False)  # "next_break" or "next_review"
 
 
@@ -196,7 +208,9 @@ class ReviewHistory(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False)
-    review_date = Column(DateTime, nullable=False, default=datetime.utcnow)
+    review_date = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
     action = Column(
         String(50), nullable=False
     )  # "completed", "blocked", "parked", etc.
@@ -214,7 +228,9 @@ class ReviewCard(Base):
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=True)
     content = Column(Text, nullable=False)
     responses = Column(JSON, nullable=False)  # Array of {option: str, action: str}
-    generated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    generated_at = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
 
 
 class User(Base):
@@ -227,7 +243,12 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
     is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
