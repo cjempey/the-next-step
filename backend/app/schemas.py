@@ -2,10 +2,55 @@
 Pydantic schemas for API request/response validation.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional
-from pydantic import BaseModel, Field
+from typing import Optional, Annotated
+from pydantic import BaseModel, Field, BeforeValidator, PlainSerializer
+
+
+def ensure_utc_timezone(v: Optional[datetime]) -> Optional[datetime]:
+    """Ensure datetime has UTC timezone for proper serialization.
+
+    SQLite DateTime columns return naive datetimes. This validator adds
+    UTC timezone info so they serialize correctly with timezone suffix.
+    Converts non-UTC aware datetimes to UTC.
+    """
+    if v is None:
+        return None
+    if not isinstance(v, datetime):
+        raise TypeError(f"Expected datetime or None, got {type(v).__name__}")
+    # If naive, assume UTC
+    if v.tzinfo is None:
+        return v.replace(tzinfo=timezone.utc)
+    # If already aware but not UTC, convert to UTC
+    if v.tzinfo != timezone.utc:
+        return v.astimezone(timezone.utc)
+    return v
+
+
+def serialize_datetime_with_z(v: Optional[datetime]) -> Optional[str]:
+    """Serialize datetime as ISO 8601 string with timezone info.
+
+    Uses second precision for consistent formatting.
+    Returns format like '2026-01-04T07:08:00Z' for UTC times.
+    """
+    if v is None:
+        return None
+    # Ensure UTC timezone (defensive, should already be handled by validator)
+    if v.tzinfo is None:
+        v = v.replace(tzinfo=timezone.utc)
+    elif v.tzinfo != timezone.utc:
+        v = v.astimezone(timezone.utc)
+    # Serialize with second precision and Z suffix for UTC
+    return v.isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
+# Custom datetime type that always serializes with timezone
+AwareDatetime = Annotated[
+    datetime,
+    BeforeValidator(ensure_utc_timezone),
+    PlainSerializer(serialize_datetime_with_z, return_type=str, when_used="json"),
+]
 
 
 class ImpactEnum(str, Enum):
@@ -91,11 +136,11 @@ class TaskResponse(BaseModel):
     impact: ImpactEnum
     urgency: UrgencyEnum
     state: TaskStateEnum
-    due_date: Optional[datetime]
+    due_date: Optional[AwareDatetime]
     completion_percentage: Optional[int]
     notes: Optional[str]
-    created_at: datetime
-    updated_at: datetime
+    created_at: AwareDatetime
+    updated_at: AwareDatetime
 
     class Config:
         from_attributes = True
@@ -118,8 +163,8 @@ class ValueResponse(BaseModel):
     id: int
     statement: str
     archived: bool  # Computed from archived_at via hybrid property
-    created_at: datetime
-    archived_at: Optional[datetime] = None  # NULL for active values
+    created_at: AwareDatetime
+    archived_at: Optional[AwareDatetime] = None  # NULL for active values
 
     class Config:
         from_attributes = True
@@ -154,7 +199,7 @@ class ReviewCardResponse(BaseModel):
     task_id: Optional[int]
     content: str
     responses: list[dict]  # [{"option": "str", "action": "handler_key"}, ...]
-    generated_at: datetime
+    generated_at: AwareDatetime
 
     class Config:
         from_attributes = True
@@ -192,7 +237,7 @@ class UserResponse(BaseModel):
     username: str
     email: str
     is_active: bool
-    created_at: datetime
+    created_at: AwareDatetime
 
     class Config:
         from_attributes = True
