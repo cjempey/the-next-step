@@ -100,7 +100,7 @@ async def update_value(
     current_user: User = Depends(get_current_active_user),
 ):
     """Update a value statement for the authenticated user.
-    
+
     Archived values cannot be updated. They are kept for historical reference
     (e.g., year-in-review) and must remain immutable.
     """
