@@ -1,6 +1,6 @@
 """Tests for Pydantic schemas."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from app.schemas import (
     TaskCreate,
     TaskUpdate,
@@ -23,7 +23,7 @@ def test_task_create_schema():
         "value_ids": [1, 2],
         "impact": ImpactEnum.A,
         "urgency": UrgencyEnum.IMMEDIATE,
-        "due_date": datetime.utcnow(),
+        "due_date": datetime.now(timezone.utc),
         "recurrence": RecurrenceEnum.NONE,
     }
     task = TaskCreate(**task_data)
@@ -75,7 +75,7 @@ def test_value_response_schema():
         "id": 1,
         "statement": "Test Value",
         "archived": False,
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(timezone.utc),
     }
     value = ValueResponse(**value_data)
 
@@ -92,7 +92,7 @@ def test_review_card_response_schema():
         "task_id": 123,
         "content": "Test content",
         "responses": [{"option": "Yes", "action": "confirm"}],
-        "generated_at": datetime.utcnow(),
+        "generated_at": datetime.now(timezone.utc),
     }
     card = ReviewCardResponse(**card_data)
 
@@ -112,7 +112,7 @@ def test_review_card_response_nullable_task_id():
         "task_id": None,
         "content": "Test content",
         "responses": [],
-        "generated_at": datetime.utcnow(),
+        "generated_at": datetime.now(timezone.utc),
     }
     card = ReviewCardResponse(**card_data)
 
