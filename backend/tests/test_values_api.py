@@ -1,6 +1,7 @@
 """Tests for Values API endpoints."""
 
 import pytest
+from datetime import datetime
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -599,3 +600,178 @@ def test_archived_value_can_be_updated():
     assert update_response.status_code == 200
     assert update_response.json()["statement"] == "Updated archived value"
     assert update_response.json()["archived"] is True
+
+
+# Tests for archived_at timestamp functionality (Issue #16)
+
+
+def test_archive_value_sets_archived_at_timestamp():
+    """Test that archiving a value sets the archived_at timestamp."""
+    db = TestingSessionLocal()
+    create_test_user(db)
+    db.close()
+
+    # Create a value
+    create_response = client.post("/api/values/", json={"statement": "To be archived"})
+    value_id = create_response.json()["id"]
+
+    # Archive the value
+    archive_response = client.patch(f"/api/values/{value_id}/archive")
+
+    assert archive_response.status_code == 200
+    data = archive_response.json()
+    assert data["archived"] is True
+    assert data["archived_at"] is not None
+    assert isinstance(data["archived_at"], str)  # ISO 8601 timestamp
+
+
+def test_archive_value_idempotent_preserves_timestamp():
+    """Test that archiving an already-archived value is idempotent and preserves the original timestamp."""
+    db = TestingSessionLocal()
+    create_test_user(db)
+    db.close()
+
+    # Create a value
+    create_response = client.post("/api/values/", json={"statement": "To be archived"})
+    value_id = create_response.json()["id"]
+
+    # Archive the value first time
+    first_archive = client.patch(f"/api/values/{value_id}/archive")
+    assert first_archive.status_code == 200
+    first_timestamp = first_archive.json()["archived_at"]
+    assert first_timestamp is not None
+
+    # Archive the value again (should be idempotent)
+    second_archive = client.patch(f"/api/values/{value_id}/archive")
+    assert second_archive.status_code == 200
+    second_timestamp = second_archive.json()["archived_at"]
+
+    # Timestamp should be unchanged
+    assert second_timestamp == first_timestamp
+
+
+def test_new_value_has_null_archived_at():
+    """Test that creating a new value leaves archived_at as NULL."""
+    db = TestingSessionLocal()
+    create_test_user(db)
+    db.close()
+
+    response = client.post("/api/values/", json={"statement": "Active value"})
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["archived"] is False
+    assert data["archived_at"] is None
+
+
+def test_api_response_includes_archived_and_archived_at():
+    """Test that API responses include both archived (computed) and archived_at fields."""
+    db = TestingSessionLocal()
+    create_test_user(db)
+    db.close()
+
+    # Create and archive a value
+    create_response = client.post("/api/values/", json={"statement": "Test value"})
+    value_id = create_response.json()["id"]
+    client.patch(f"/api/values/{value_id}/archive")
+
+    # Test GET endpoint
+    response = client.get("/api/values/?include_archived=true")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert "archived" in data[0]
+    assert "archived_at" in data[0]
+    assert data[0]["archived"] is True
+    assert data[0]["archived_at"] is not None
+
+
+def test_hybrid_property_filtering_active_values():
+    """Test that filtering by ~Value.archived returns only active values."""
+    db = TestingSessionLocal()
+    user = create_test_user(db)
+
+    # Create active and archived values directly in DB
+    active_value = Value(user_id=user.id, statement="Active value")
+    db.add(active_value)
+    db.commit()
+    db.refresh(active_value)
+
+    archived_value = Value(user_id=user.id, statement="Archived value")
+    db.add(archived_value)
+    db.commit()
+    db.refresh(archived_value)
+
+    # Archive one value
+    archived_value.archived_at = datetime.utcnow()
+    db.commit()
+    db.close()
+
+    # Query through API
+    response = client.get("/api/values/")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["statement"] == "Active value"
+    assert data[0]["archived"] is False
+
+
+def test_hybrid_property_filtering_archived_values():
+    """Test that filtering by Value.archived returns only archived values."""
+    db = TestingSessionLocal()
+    user = create_test_user(db)
+
+    # Create active and archived values
+    active_value = Value(user_id=user.id, statement="Active value")
+    db.add(active_value)
+    db.commit()
+
+    archived_value = Value(user_id=user.id, statement="Archived value")
+    db.add(archived_value)
+    db.commit()
+    db.refresh(archived_value)
+
+    # Archive one value
+    archived_value.archived_at = datetime.utcnow()
+    db.commit()
+    db.close()
+
+    # Query through API with include_archived
+    response = client.get("/api/values/?include_archived=true")
+    assert response.status_code == 200
+    data = response.json()
+
+    # Should have both values
+    assert len(data) == 2
+
+    # Find the archived one
+    archived_values = [v for v in data if v["archived"]]
+    assert len(archived_values) == 1
+    assert archived_values[0]["statement"] == "Archived value"
+
+
+def test_hybrid_property_returns_correct_boolean():
+    """Test that the hybrid property value.archived returns the correct boolean based on archived_at."""
+    db = TestingSessionLocal()
+    user = create_test_user(db)
+
+    # Create an active value
+    active_value = Value(user_id=user.id, statement="Active")
+    db.add(active_value)
+    db.commit()
+    db.refresh(active_value)
+
+    # Test active value
+    assert active_value.archived is False
+    assert active_value.archived_at is None
+
+    # Archive the value
+    active_value.archived_at = datetime.utcnow()
+    db.commit()
+    db.refresh(active_value)
+
+    # Test archived value
+    assert active_value.archived is True
+    assert active_value.archived_at is not None
+
+    db.close()

@@ -2,6 +2,8 @@
 Value endpoints.
 """
 
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -123,18 +125,28 @@ async def archive_value(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Archive a value, making it part of the user's historical record.
+    """Archive a value for the authenticated user.
 
-    Archiving is a one-way operation - it preserves the value as part of
-    "Your Journey" showing when you focused on this value. Archived values
-    do not affect existing task-value links.
+    Archiving makes a value part of "Your Journey", showing when you focused
+    on this value. Archived values do not affect existing task-value links.
 
-    To focus on this value again in the future, create a new active value
-    with the same statement (UI provides "Revisit" button for this).
+    This endpoint is idempotent: archiving an already-archived value succeeds
+    without error and preserves the original archived_at timestamp. This allows
+    the UI to safely call archive multiple times without losing historical data.
 
-    This endpoint is idempotent - archiving an already-archived value succeeds
-    without error. Issue #16 will enhance this by adding an archived_at
-    timestamp while preserving idempotency.
+    To focus on this value again, create a new active value with the same
+    statement (UI provides "Revisit" button for this).
+
+    Args:
+        value_id: ID of the value to archive
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        The archived value with archived_at timestamp
+
+    Raises:
+        HTTPException: 404 if value not found or doesn't belong to user
     """
     value = (
         db.query(Value)
@@ -147,7 +159,12 @@ async def archive_value(
             status_code=status.HTTP_404_NOT_FOUND, detail="Value not found"
         )
 
-    value.archived = True
-    db.commit()
-    db.refresh(value)
+    # Idempotent: only set archived_at if not already set
+    # This preserves the original archive date for historical accuracy
+    if not value.archived:
+        value.archived_at = datetime.utcnow()
+        db.commit()
+        db.refresh(value)
+
+    # Return value whether newly archived or already archived
     return value

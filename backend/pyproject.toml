@@ -42,3 +42,4 @@ testpaths = ["tests"]
 reportArgumentType = "none"
 reportAttributeAccessIssue = "none"
 reportGeneralTypeIssues = "none"
+reportRedeclaration = "none"  # Allow hybrid_property pattern in SQLAlchemy models
