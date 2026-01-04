@@ -99,7 +99,11 @@ async def update_value(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Update a value statement for the authenticated user."""
+    """Update a value statement for the authenticated user.
+    
+    Archived values cannot be updated. They are kept for historical reference
+    (e.g., year-in-review) and must remain immutable.
+    """
     validated_statement = validate_statement(value_data.statement)
 
     value = (
@@ -111,6 +115,12 @@ async def update_value(
     if not value:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Value not found"
+        )
+
+    if value.archived:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot update archived value. Archived values are immutable.",
         )
 
     value.statement = validated_statement
