@@ -2,10 +2,40 @@
 Pydantic schemas for API request/response validation.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional
-from pydantic import BaseModel, Field
+from typing import Optional, Annotated
+from pydantic import BaseModel, Field, BeforeValidator, PlainSerializer
+
+
+def ensure_utc_timezone(v: datetime) -> datetime:
+    """Ensure datetime has UTC timezone for proper serialization.
+    
+    SQLite DateTime columns return naive datetimes. This validator adds
+    UTC timezone info so they serialize correctly with 'Z' suffix.
+    """
+    if v is not None and isinstance(v, datetime) and v.tzinfo is None:
+        return v.replace(tzinfo=timezone.utc)
+    return v
+
+
+def serialize_datetime_with_z(v: datetime) -> str:
+    """Serialize datetime as ISO string with 'Z' suffix for UTC."""
+    if v is None:
+        return None
+    # Ensure UTC timezone
+    if v.tzinfo is None:
+        v = v.replace(tzinfo=timezone.utc)
+    # Serialize with Z suffix
+    return v.isoformat().replace('+00:00', 'Z')
+
+
+# Custom datetime type that always serializes with timezone
+AwareDatetime = Annotated[
+    datetime,
+    BeforeValidator(ensure_utc_timezone),
+    PlainSerializer(serialize_datetime_with_z, return_type=str, when_used='json'),
+]
 
 
 class ImpactEnum(str, Enum):
@@ -91,11 +121,11 @@ class TaskResponse(BaseModel):
     impact: ImpactEnum
     urgency: UrgencyEnum
     state: TaskStateEnum
-    due_date: Optional[datetime]
+    due_date: Optional[AwareDatetime]
     completion_percentage: Optional[int]
     notes: Optional[str]
-    created_at: datetime
-    updated_at: datetime
+    created_at: AwareDatetime
+    updated_at: AwareDatetime
 
     class Config:
         from_attributes = True
@@ -118,8 +148,8 @@ class ValueResponse(BaseModel):
     id: int
     statement: str
     archived: bool  # Computed from archived_at via hybrid property
-    created_at: datetime
-    archived_at: Optional[datetime] = None  # NULL for active values
+    created_at: AwareDatetime
+    archived_at: Optional[AwareDatetime] = None  # NULL for active values
 
     class Config:
         from_attributes = True
@@ -154,7 +184,7 @@ class ReviewCardResponse(BaseModel):
     task_id: Optional[int]
     content: str
     responses: list[dict]  # [{"option": "str", "action": "handler_key"}, ...]
-    generated_at: datetime
+    generated_at: AwareDatetime
 
     class Config:
         from_attributes = True
@@ -192,7 +222,7 @@ class UserResponse(BaseModel):
     username: str
     email: str
     is_active: bool
-    created_at: datetime
+    created_at: AwareDatetime
 
     class Config:
         from_attributes = True
