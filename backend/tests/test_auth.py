@@ -343,3 +343,110 @@ class TestJWTTokenHandling:
 
         assert response.status_code == 401
         assert "Invalid authentication credentials" in response.json()["detail"]
+
+
+class TestPasswordHashing:
+    """Tests for password hashing and verification functions."""
+
+    def test_hash_password_produces_argon2_hash(self):
+        """Test that hash_password produces an Argon2 hash."""
+        from app.auth import hash_password
+
+        password = "testpassword123"
+        hashed = hash_password(password)
+
+        # Argon2 hashes start with "$argon2"
+        assert hashed.startswith("$argon2")
+        # Hash should be different from the plain password
+        assert hashed != password
+
+    def test_verify_password_with_argon2_hash(self):
+        """Test that verify_password correctly verifies Argon2 hashes."""
+        from app.auth import hash_password, verify_password
+
+        password = "correctpassword"
+        hashed = hash_password(password)
+
+        # Correct password should verify
+        assert verify_password(password, hashed) is True
+        # Wrong password should not verify
+        assert verify_password("wrongpassword", hashed) is False
+
+    def test_verify_password_with_legacy_bcrypt_hash(self):
+        """Test that verify_password correctly verifies legacy bcrypt hashes."""
+        import bcrypt
+        from app.auth import verify_password
+
+        # Create a legacy bcrypt hash directly
+        password = "legacypassword123"
+        bcrypt_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+        bcrypt_hash_str = bcrypt_hash.decode("utf-8")
+
+        # Correct password should verify
+        assert verify_password(password, bcrypt_hash_str) is True
+        # Wrong password should not verify
+        assert verify_password("wrongpassword", bcrypt_hash_str) is False
+
+    def test_verify_password_distinguishes_hash_types(self):
+        """Test that verify_password correctly routes to the right algorithm."""
+        import bcrypt
+        from app.auth import hash_password, verify_password
+
+        password = "testpassword"
+
+        # Create both types of hashes
+        argon2_hash = hash_password(password)
+        bcrypt_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode(
+            "utf-8"
+        )
+
+        # Both should verify correctly
+        assert verify_password(password, argon2_hash) is True
+        assert verify_password(password, bcrypt_hash) is True
+
+        # Wrong password should fail for both
+        assert verify_password("wrongpass", argon2_hash) is False
+        assert verify_password("wrongpass", bcrypt_hash) is False
+
+    def test_verify_password_with_invalid_hash(self):
+        """Test that verify_password returns False for invalid hashes."""
+        from app.auth import verify_password
+
+        # Invalid hash formats should return False, not raise exceptions
+        assert verify_password("password", "not-a-valid-hash") is False
+        assert verify_password("password", "") is False
+        assert verify_password("password", "$argon2invalid") is False
+
+    def test_login_with_legacy_bcrypt_hash(self):
+        """Test that users with legacy bcrypt hashes can still login."""
+        import bcrypt
+
+        # Create a user with a legacy bcrypt hash directly in database
+        db = TestingSessionLocal()
+        try:
+            password = "legacyuserpass"
+            bcrypt_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+            legacy_user = User(
+                username="legacyuser",
+                email="legacy@example.com",
+                password_hash=bcrypt_hash.decode("utf-8"),
+                is_active=True,
+            )
+            db.add(legacy_user)
+            db.commit()
+        finally:
+            db.close()
+
+        # User should be able to login with their password
+        response = client.post(
+            "/api/auth/login",
+            json={
+                "username": "legacyuser",
+                "password": password,
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "access_token" in data
+        assert data["user"]["username"] == "legacyuser"
