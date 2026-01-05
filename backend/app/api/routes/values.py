@@ -104,8 +104,6 @@ async def update_value(
     Archived values cannot be updated. They are kept for historical reference
     (e.g., year-in-review) and must remain immutable.
     """
-    validated_statement = validate_statement(value_data.statement)
-
     value = (
         db.query(Value)
         .filter(Value.id == value_id, Value.user_id == current_user.id)
@@ -123,6 +121,7 @@ async def update_value(
             detail="Cannot update archived value. Archived values are immutable.",
         )
 
+    validated_statement = validate_statement(value_data.statement)
     value.statement = validated_statement
     db.commit()
     db.refresh(value)
