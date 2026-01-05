@@ -61,12 +61,21 @@ async def override_get_current_active_user():
     )
 
 
-# Override the dependencies
-app.dependency_overrides[get_db] = override_get_db
-app.dependency_overrides[get_current_active_user] = override_get_current_active_user
-
 # Create test client
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def override_dependencies():
+    """Set up and tear down FastAPI dependency overrides for each test.
+
+    This avoids cross-module interference when multiple test files override
+    dependencies on the shared FastAPI `app` instance.
+    """
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_active_user] = override_get_current_active_user
+    yield
+    app.dependency_overrides.clear()
 
 
 def create_test_user(db, username="testuser", email="test@example.com"):
