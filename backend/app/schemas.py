@@ -118,6 +118,7 @@ class TaskUpdate(BaseModel):
 
     title: Optional[str] = None
     description: Optional[str] = None
+    value_ids: Optional[list[int]] = None
     impact: Optional[ImpactEnum] = None
     urgency: Optional[UrgencyEnum] = None
     state: Optional[TaskStateEnum] = None
@@ -137,6 +138,7 @@ class TaskResponse(BaseModel):
     urgency: UrgencyEnum
     state: TaskStateEnum
     due_date: Optional[AwareDatetime]
+    recurrence: RecurrenceEnum
     completion_percentage: Optional[int]
     notes: Optional[str]
     created_at: AwareDatetime
