@@ -580,8 +580,8 @@ def test_archive_value_doesnt_affect_tasks():
         db.close()
 
 
-def test_archived_value_can_be_updated():
-    """Test that archived values can still be updated."""
+def test_archived_value_cannot_be_updated():
+    """Test that archived values cannot be updated (are immutable)."""
     db = TestingSessionLocal()
     create_test_user(db)
     db.close()
@@ -591,15 +591,22 @@ def test_archived_value_can_be_updated():
     value_id = create_response.json()["id"]
     client.patch(f"/api/values/{value_id}/archive")
 
-    # Update the archived value
+    # Try to update the archived value - should fail
     update_response = client.put(
         f"/api/values/{value_id}",
         json={"statement": "Updated archived value"},
     )
 
-    assert update_response.status_code == 200
-    assert update_response.json()["statement"] == "Updated archived value"
-    assert update_response.json()["archived"] is True
+    assert update_response.status_code == 400
+    assert "Cannot update archived value" in update_response.json()["detail"]
+    assert "immutable" in update_response.json()["detail"]
+
+    # Verify the value was not modified
+    list_response = client.get("/api/values/?include_archived=true")
+    values = list_response.json()
+    value = next(v for v in values if v["id"] == value_id)
+    assert value["statement"] == "Original"
+    assert value["archived"] is True
 
 
 # Tests for archived_at timestamp functionality (Issue #16)
