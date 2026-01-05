@@ -30,6 +30,17 @@ async def list_tasks(
 
     # Apply value filter if provided
     if value_id is not None:
+        # Verify the value exists and belongs to the current user
+        value = (
+            db.query(Value)
+            .filter(Value.id == value_id, Value.user_id == current_user.id)
+            .first()
+        )
+        if value is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Value not found",
+            )
         query = query.join(Task.values).filter(Value.id == value_id)
 
     tasks = query.all()
@@ -80,14 +91,17 @@ async def create_task(
     
     # Handle value linking if value_ids provided
     if task_data.value_ids:
+        # Deduplicate IDs to avoid false negatives when validating
+        unique_value_ids = list(set(task_data.value_ids))
+        
         # Query values that exist and belong to user
         values = db.query(Value).filter(
-            Value.id.in_(task_data.value_ids),
+            Value.id.in_(unique_value_ids),
             Value.user_id == current_user.id
         ).all()
         
         # Verify all requested values were found
-        if len(values) != len(task_data.value_ids):
+        if len(values) != len(unique_value_ids):
             raise HTTPException(status_code=400, detail="Invalid value_ids")
         
         # Link to task
@@ -189,14 +203,17 @@ async def update_task(
     # Update value_ids if provided
     if task_data.value_ids is not None:
         if task_data.value_ids:
+            # Deduplicate IDs to avoid false negatives when validating
+            unique_value_ids = list(set(task_data.value_ids))
+            
             # Query values that exist and belong to user
             values = db.query(Value).filter(
-                Value.id.in_(task_data.value_ids),
+                Value.id.in_(unique_value_ids),
                 Value.user_id == current_user.id
             ).all()
             
             # Verify all requested values were found
-            if len(values) != len(task_data.value_ids):
+            if len(values) != len(unique_value_ids):
                 raise HTTPException(status_code=400, detail="Invalid value_ids")
             
             # Replace task values

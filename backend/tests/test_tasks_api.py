@@ -1,7 +1,6 @@
 """Tests for Tasks API endpoints."""
 
 import pytest
-from datetime import datetime, timezone
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -12,8 +11,6 @@ from app.main import app
 from app.core.database import get_db
 from app.models import (
     Base,
-    Task,
-    Value,
     User,
     ImpactEnum,
     UrgencyEnum,
@@ -70,12 +67,21 @@ async def override_get_current_active_user():
     )
 
 
-# Override the dependencies
-app.dependency_overrides[get_db] = override_get_db
-app.dependency_overrides[get_current_active_user] = override_get_current_active_user
-
 # Create test client
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def override_dependencies():
+    """Set up and tear down FastAPI dependency overrides for each test.
+
+    This avoids cross-module interference when multiple test files override
+    dependencies on the shared FastAPI `app` instance.
+    """
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_active_user] = override_get_current_active_user
+    yield
+    app.dependency_overrides.clear()
 
 
 def create_test_user(db, username="testuser", email="test@example.com"):
@@ -247,6 +253,32 @@ def test_create_task_with_other_users_value():
     assert "Invalid value_ids" in response.json()["detail"]
 
 
+def test_create_task_with_duplicate_value_ids():
+    """Test creating a task with duplicate value_ids - verify duplicates are handled."""
+    db = TestingSessionLocal()
+    create_test_user(db)
+    db.close()
+
+    # Create a value
+    value_response = client.post("/api/values/", json={"statement": "Test Value"})
+    value_id = value_response.json()["id"]
+
+    # Create task with duplicate value_ids
+    response = client.post(
+        "/api/tasks/",
+        json={
+            "title": "Task with duplicate values",
+            "value_ids": [value_id, value_id, value_id],
+        },
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    # Should only have the value once
+    assert len(data["value_ids"]) == 1
+    assert data["value_ids"][0] == value_id
+
+
 # LIST Tests
 
 
@@ -289,8 +321,7 @@ def test_list_tasks_filter_by_state():
     db.close()
 
     # Create tasks with different states
-    task1_response = client.post("/api/tasks/", json={"title": "Ready task"})
-    task1_id = task1_response.json()["id"]
+    client.post("/api/tasks/", json={"title": "Ready task"})
 
     task2_response = client.post("/api/tasks/", json={"title": "In progress task"})
     task2_id = task2_response.json()["id"]
@@ -352,7 +383,7 @@ def test_list_tasks_filter_combined():
     value_id = value_response.json()["id"]
 
     # Create tasks with various combinations
-    task1_response = client.post(
+    client.post(
         "/api/tasks/", json={"title": "Ready + Value", "value_ids": [value_id]}
     )
 
@@ -365,7 +396,7 @@ def test_list_tasks_filter_combined():
         json={"state": TaskStateEnum.IN_PROGRESS.value},
     )
 
-    task3_response = client.post("/api/tasks/", json={"title": "Ready + NoValue"})
+    client.post("/api/tasks/", json={"title": "Ready + NoValue"})
 
     # Filter by Ready state AND value_id
     response = client.get(
@@ -403,6 +434,29 @@ def test_list_tasks_only_own():
     data = response.json()
     assert len(data) == 1
     assert data[0]["title"] == "User2 Task"
+
+
+def test_list_tasks_filter_by_other_users_value():
+    """Test filtering by another user's value_id - verify 404 error."""
+    db = TestingSessionLocal()
+
+    # Create first user and their value
+    create_test_user(db, username="user1", email="user1@example.com")
+    db.close()
+
+    value_response = client.post("/api/values/", json={"statement": "User1's Value"})
+    value_id = value_response.json()["id"]
+
+    # Switch to second user
+    db = TestingSessionLocal()
+    create_test_user(db, username="user2", email="user2@example.com")
+    db.close()
+
+    # Try to filter by user1's value
+    response = client.get(f"/api/tasks/?value_id={value_id}")
+
+    assert response.status_code == 404
+    assert "Value not found" in response.json()["detail"]
 
 
 # GET single task tests
@@ -580,6 +634,83 @@ def test_update_task_clear_values():
     assert response.status_code == 200
     data = response.json()
     assert data["value_ids"] == []
+
+
+def test_update_task_with_invalid_value_id():
+    """Test updating a task with invalid value_id - verify 400 error."""
+    db = TestingSessionLocal()
+    create_test_user(db)
+    db.close()
+
+    # Create a task
+    create_response = client.post("/api/tasks/", json={"title": "Test Task"})
+    task_id = create_response.json()["id"]
+
+    # Try to update with invalid value_id
+    response = client.put(
+        f"/api/tasks/{task_id}",
+        json={"value_ids": [999]},
+    )
+
+    assert response.status_code == 400
+    assert "Invalid value_ids" in response.json()["detail"]
+
+
+def test_update_task_with_other_users_value():
+    """Test updating a task with another user's value - verify 400 error."""
+    db = TestingSessionLocal()
+
+    # Create first user and their value
+    create_test_user(db, username="user1", email="user1@example.com")
+    db.close()
+
+    value_response = client.post("/api/values/", json={"statement": "User1's Value"})
+    value_id = value_response.json()["id"]
+
+    # Switch to second user
+    db = TestingSessionLocal()
+    create_test_user(db, username="user2", email="user2@example.com")
+    db.close()
+
+    # Create a task as user2
+    create_response = client.post("/api/tasks/", json={"title": "User2 Task"})
+    task_id = create_response.json()["id"]
+
+    # Try to update with user1's value
+    response = client.put(
+        f"/api/tasks/{task_id}",
+        json={"value_ids": [value_id]},
+    )
+
+    assert response.status_code == 400
+    assert "Invalid value_ids" in response.json()["detail"]
+
+
+def test_update_task_with_duplicate_value_ids():
+    """Test updating a task with duplicate value_ids - verify duplicates are handled."""
+    db = TestingSessionLocal()
+    create_test_user(db)
+    db.close()
+
+    # Create a value
+    value_response = client.post("/api/values/", json={"statement": "Test Value"})
+    value_id = value_response.json()["id"]
+
+    # Create a task
+    create_response = client.post("/api/tasks/", json={"title": "Test Task"})
+    task_id = create_response.json()["id"]
+
+    # Update with duplicate value_ids
+    response = client.put(
+        f"/api/tasks/{task_id}",
+        json={"value_ids": [value_id, value_id, value_id]},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    # Should only have the value once
+    assert len(data["value_ids"]) == 1
+    assert data["value_ids"][0] == value_id
 
 
 def test_update_task_not_found():
