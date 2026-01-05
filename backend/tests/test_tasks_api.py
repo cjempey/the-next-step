@@ -383,9 +383,7 @@ def test_list_tasks_filter_combined():
     value_id = value_response.json()["id"]
 
     # Create tasks with various combinations
-    client.post(
-        "/api/tasks/", json={"title": "Ready + Value", "value_ids": [value_id]}
-    )
+    client.post("/api/tasks/", json={"title": "Ready + Value", "value_ids": [value_id]})
 
     task2_response = client.post(
         "/api/tasks/", json={"title": "InProgress + Value", "value_ids": [value_id]}

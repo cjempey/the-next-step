@@ -80,33 +80,34 @@ async def create_task(
         "due_date": task_data.due_date,
         "recurrence": task_data.recurrence,
     }
-    
+
     # Only set impact/urgency if provided (to allow model defaults)
     if task_data.impact is not None:
         task_dict["impact"] = task_data.impact
     if task_data.urgency is not None:
         task_dict["urgency"] = task_data.urgency
-    
+
     new_task = Task(**task_dict)
-    
+
     # Handle value linking if value_ids provided
     if task_data.value_ids:
         # Deduplicate IDs to avoid false negatives when validating
         unique_value_ids = list(set(task_data.value_ids))
-        
+
         # Query values that exist and belong to user
-        values = db.query(Value).filter(
-            Value.id.in_(unique_value_ids),
-            Value.user_id == current_user.id
-        ).all()
-        
+        values = (
+            db.query(Value)
+            .filter(Value.id.in_(unique_value_ids), Value.user_id == current_user.id)
+            .all()
+        )
+
         # Verify all requested values were found
         if len(values) != len(unique_value_ids):
             raise HTTPException(status_code=400, detail="Invalid value_ids")
-        
+
         # Link to task
         new_task.values = values
-    
+
     db.add(new_task)
     db.commit()
     db.refresh(new_task)
@@ -199,23 +200,26 @@ async def update_task(
         task.completion_percentage = task_data.completion_percentage
     if task_data.notes is not None:
         task.notes = task_data.notes
-    
+
     # Update value_ids if provided
     if task_data.value_ids is not None:
         if task_data.value_ids:
             # Deduplicate IDs to avoid false negatives when validating
             unique_value_ids = list(set(task_data.value_ids))
-            
+
             # Query values that exist and belong to user
-            values = db.query(Value).filter(
-                Value.id.in_(unique_value_ids),
-                Value.user_id == current_user.id
-            ).all()
-            
+            values = (
+                db.query(Value)
+                .filter(
+                    Value.id.in_(unique_value_ids), Value.user_id == current_user.id
+                )
+                .all()
+            )
+
             # Verify all requested values were found
             if len(values) != len(unique_value_ids):
                 raise HTTPException(status_code=400, detail="Invalid value_ids")
-            
+
             # Replace task values
             task.values = values
         else:
