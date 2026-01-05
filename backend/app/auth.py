@@ -38,20 +38,28 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Supports both Argon2 (new) and bcrypt (legacy) hashes for backward compatibility.
     Argon2 hashes start with "$argon2", bcrypt hashes start with "$2" or "$2a" or "$2b".
     """
-    try:
-        # Try Argon2 first (for new hashes)
-        ph.verify(hashed_password, plain_password)
-        return True
-    except (VerifyMismatchError, InvalidHashError):
-        # Fall back to bcrypt for legacy hashes
-        # bcrypt hashes are stored as strings but bcrypt.checkpw expects bytes
+    # Route based on hash prefix instead of relying on exceptions for control flow
+    if hashed_password.startswith("$argon2"):
+        # Argon2 hash
         try:
-            return bcrypt.checkpw(
-                plain_password.encode("utf-8"), hashed_password.encode("utf-8")
-            )
-        except (ValueError, AttributeError):
-            # Invalid hash format for both argon2 and bcrypt
+            ph.verify(hashed_password, plain_password)
+            return True
+        except VerifyMismatchError:
+            # Valid Argon2 hash but password does not match
             return False
+        except InvalidHashError:
+            # Hash claims to be Argon2 but is malformed
+            return False
+
+    # Fall back to bcrypt for legacy hashes
+    # bcrypt hashes are stored as strings but bcrypt.checkpw expects bytes
+    try:
+        return bcrypt.checkpw(
+            plain_password.encode("utf-8"), hashed_password.encode("utf-8")
+        )
+    except ValueError:
+        # Invalid hash format for bcrypt
+        return False
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
