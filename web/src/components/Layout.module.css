@@ -1,0 +1,124 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.sidebarDesktop {
+  width: 250px;
+  background-color: white;
+  border-right: 1px solid #ddd;
+  padding: 1rem;
+  display: none;
+}
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: 1rem 2rem;
+  background-color: white;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.hamburgerButton {
+  display: block;
+  padding: 0.5rem;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  color: #333;
+}
+
+.hamburgerButton:hover {
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+
+.headerTitle {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.pageContent {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+}
+
+.sidebarMobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 250px;
+  background-color: white;
+  border-right: 1px solid #ddd;
+  padding: 1rem;
+  z-index: 999;
+  overflow-y: auto;
+}
+
+.mobileHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.mobileTitle {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.closeButton {
+  padding: 0.5rem;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  color: #333;
+}
+
+.closeButton:hover {
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+
+/* Desktop sidebar - always visible on larger screens */
+@media (min-width: 768px) {
+  .sidebarDesktop {
+    display: block;
+    position: static;
+  }
+  .sidebarMobile {
+    display: none;
+  }
+  .overlay {
+    display: none;
+  }
+  .hamburgerButton {
+    display: none;
+  }
+}
+
+/* Mobile sidebar - hidden by default, shown when menu is open */
+@media (max-width: 767px) {
+  .sidebarDesktop {
+    display: none;
+  }
+}

@@ -140,7 +140,7 @@ export default function ValuesPage() {
   }
 
   return (
-    <div style={{ padding: '1rem', maxWidth: '800px', margin: '0 auto' }}>
+    <div style={{ padding: 'clamp(1rem, 3vw, 2rem)', maxWidth: '800px', margin: '0 auto' }}>
       <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2rem)' }}>My Values</h1>
       <p style={{ color: '#666', marginBottom: '2rem' }}>
         What matters most to you? Define and prioritize your personal values.
