@@ -8,13 +8,10 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
     // Force single-process execution to avoid worker pool issues in CI
+    // In vitest 4.x, poolOptions are now top-level
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        maxForks: 1,
-        minForks: 1,
-      },
-    },
+    maxForks: 1,
+    minForks: 1,
     watch: false,
     passWithNoTests: false,
   },
