@@ -67,6 +67,11 @@ if [ $FAILED -eq 0 ]; then
 fi
 
 if [ $FAILED -eq 0 ]; then
+    echo "→ Running tests..."
+    npm run test || { echo "❌ Tests failed"; FAILED=1; }
+fi
+
+if [ $FAILED -eq 0 ]; then
     echo "→ Running build..."
     npm run build || { echo "❌ Build failed"; FAILED=1; }
 fi

@@ -1,18 +1,25 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import Layout from './components/Layout'
+import TaskList from './pages/TaskList'
 import ValuesPage from './pages/ValuesPage'
+import MorningPlanning from './pages/MorningPlanning'
+import EveningReview from './pages/EveningReview'
+import WhatNext from './pages/WhatNext'
 
 function App() {
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      <nav style={{ 
-        padding: '1rem 2rem', 
-        backgroundColor: 'white', 
-        borderBottom: '1px solid #ddd',
-        marginBottom: '0'
-      }}>
-        <h1 style={{ margin: 0, fontSize: '1.5rem' }}>The Next Step</h1>
-      </nav>
-      <ValuesPage />
-    </div>
+    <BrowserRouter>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Navigate to="/tasks" replace />} />
+          <Route path="/tasks" element={<TaskList />} />
+          <Route path="/values" element={<ValuesPage />} />
+          <Route path="/morning-planning" element={<MorningPlanning />} />
+          <Route path="/evening-review" element={<EveningReview />} />
+          <Route path="/what-next" element={<WhatNext />} />
+        </Routes>
+      </Layout>
+    </BrowserRouter>
   )
 }
 

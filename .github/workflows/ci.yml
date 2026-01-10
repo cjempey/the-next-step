@@ -12,6 +12,7 @@ jobs:
   backend:
     name: Backend Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     
     services:
       postgres:
@@ -62,6 +63,7 @@ jobs:
   web:
     name: Web Frontend Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     
     steps:
       - uses: actions/checkout@v4
@@ -69,7 +71,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: 'web/package-lock.json'
       
@@ -85,6 +87,13 @@ jobs:
         working-directory: web
         run: npm run lint
       
+      - name: Test
+        working-directory: web
+        run: npm run test
+        timeout-minutes: 5
+        env:
+          NODE_ENV: test
+      
       - name: Build
         working-directory: web
         run: npm run build
@@ -92,6 +101,7 @@ jobs:
   mobile:
     name: Mobile Frontend Build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     
     steps:
       - uses: actions/checkout@v4
@@ -99,7 +109,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: 'mobile/package-lock.json'
       
