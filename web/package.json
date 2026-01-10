@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "lint": "eslint src --report-unused-disable-directives --max-warnings 0",
     "type-check": "tsc --noEmit",
-    "test": "vitest run --no-file-parallelism",
+    "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
@@ -36,9 +36,9 @@
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "globals": "^13.24.0",
-    "jsdom": "^25.0.1",
+    "jsdom": "^27.4.0",
     "typescript": "^5.2.2",
     "vite": "^5.0.8",
-    "vitest": "^2.1.9"
+    "vitest": "^4.0.16"
   }
 }
