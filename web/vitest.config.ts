@@ -7,7 +7,14 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
-    // Ensure process exits after tests complete
+    // Force single-process execution to avoid worker pool issues in CI
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        maxForks: 1,
+        minForks: 1,
+      },
+    },
     watch: false,
     passWithNoTests: false,
   },
