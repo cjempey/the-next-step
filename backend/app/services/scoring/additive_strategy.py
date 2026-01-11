@@ -2,8 +2,9 @@
 Additive weighted scoring strategy (MVP default).
 
 Implements the core scoring algorithm from MVP section 7:
-  Base = (impact_weight × impact_value) + (urgency_weight × urgency_value) + strategic_nudge
-  With_Dampening = Base / (1 + dampening_factor if rejected)
+  Base = (impact_weight × impact_value) + (urgency_weight × urgency_value)
+  With_Nudge = Base × strategic_nudge_boost (if Impact=A AND Urgency>=3)
+  With_Dampening = With_Nudge / (1 + dampening_factor if rejected)
   Final = With_Dampening × (priority_multiplier if daily priority, else 1.0)
 """
 
@@ -17,8 +18,9 @@ class AdditiveWeightedStrategy(ScoringStrategy):
     """Default MVP scoring strategy: Additive weighted scoring.
 
     Formula:
-      Base = (impact_weight × impact_value) + (urgency_weight × urgency_value) + strategic_nudge
-      With_Dampening = Base / (1 + dampening_factor if rejected)
+      Base = (impact_weight × impact_value) + (urgency_weight × urgency_value)
+      With_Nudge = Base × strategic_nudge_boost (if Impact=A AND Urgency>=3)
+      With_Dampening = With_Nudge / (1 + dampening_factor if rejected)
       Final = With_Dampening × (priority_multiplier if daily priority, else 1.0)
 
     Strategic nudge applied when Impact=A AND Urgency>=3 (can defer or long-term).

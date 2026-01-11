@@ -40,18 +40,19 @@ async def get_next_suggestion(
         HTTPException: 404 if no tasks available
     """
     # Query Ready tasks (optionally include In Progress)
-    query = db.query(Task).filter(
-        Task.user_id == current_user.id,
-        Task.state == TaskStateEnum.READY,
-    )
-
     if request.include_in_progress:
-        query = db.query(Task).filter(
-            Task.user_id == current_user.id,
-            Task.state.in_([TaskStateEnum.READY, TaskStateEnum.IN_PROGRESS]),
-        )
+        states = [TaskStateEnum.READY, TaskStateEnum.IN_PROGRESS]
+    else:
+        states = [TaskStateEnum.READY]
 
-    tasks = query.all()
+    tasks = (
+        db.query(Task)
+        .filter(
+            Task.user_id == current_user.id,
+            Task.state.in_(states),
+        )
+        .all()
+    )
 
     if not tasks:
         raise HTTPException(status_code=404, detail="No tasks available")
@@ -71,8 +72,13 @@ async def get_next_suggestion(
 
 
 @router.get("/strategies")
-async def list_scoring_strategies():
+async def list_scoring_strategies(
+    current_user: User = Depends(get_current_active_user),
+):
     """List available scoring strategies (for future user selection).
+
+    Args:
+        current_user: Authenticated user
 
     Returns:
         Dictionary with list of available strategies

@@ -117,7 +117,7 @@ class Task(Base):
     parent_task = relationship("Task", remote_side=[id], backref="recurrence_instances")
     user = relationship("User", backref="tasks")
 
-    @hybrid_property
+    @property
     def value_ids(self) -> list[int]:
         """Return list of value IDs for this task."""
         return [v.id for v in self.values]
