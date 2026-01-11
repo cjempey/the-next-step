@@ -1,16 +1,5 @@
 import { create } from 'zustand'
-
-interface Task {
-  id: number
-  title: string
-  description?: string
-  impact: string
-  urgency: number
-  state: string
-  completion_percentage?: number
-  notes?: string
-  created_at: string
-}
+import type { Task } from '../types/task'
 
 interface Value {
   id: number

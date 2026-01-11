@@ -6,6 +6,7 @@ interface NavigationProps {
 
 const navItems = [
   { path: '/tasks', label: 'Tasks' },
+  { path: '/tasks/new', label: 'New Task' },
   { path: '/values', label: 'Values' },
   { path: '/morning-planning', label: 'Morning Planning' },
   { path: '/evening-review', label: 'Evening Review' },
