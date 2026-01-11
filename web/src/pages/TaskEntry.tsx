@@ -1,4 +1,4 @@
-import { useState, useEffect, FormEvent } from 'react'
+import { useState, useEffect, FormEvent, ReactNode } from 'react'
 import axios from 'axios'
 import {
   DndContext,
@@ -16,11 +16,6 @@ import { taskApi, valueApi } from '../api/client'
 import { useStore } from '../store/useStore'
 import type { Value } from '../types/value'
 import type { Task, TaskCreate } from '../types/task'
-
-interface ValuePill {
-  id: number
-  statement: string
-}
 
 export default function TaskEntry() {
   // Form state
@@ -601,7 +596,7 @@ function getImpactColor(impact: string): string {
 }
 
 // Droppable zone component
-function DroppableZone({ id, children }: { id: string; children: React.ReactNode }) {
+function DroppableZone({ id, children }: { id: string; children: ReactNode }) {
   const { setNodeRef } = useDroppable({ id })
   return <div ref={setNodeRef}>{children}</div>
 }

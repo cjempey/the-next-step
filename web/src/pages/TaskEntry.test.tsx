@@ -27,9 +27,21 @@ vi.mock('../store/useStore', () => ({
 describe('TaskEntry Page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // Setup default mocks
-    vi.mocked(apiClient.valueApi.list).mockResolvedValue({ data: [] } as any)
-    vi.mocked(apiClient.taskApi.list).mockResolvedValue({ data: [] } as any)
+    // Setup default mocks - return Promises that resolve to AxiosResponse
+    vi.mocked(apiClient.valueApi.list).mockResolvedValue({ 
+      data: [],
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {} as any,
+    })
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue({ 
+      data: [],
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {} as any,
+    })
   })
 
   it('renders without errors', async () => {

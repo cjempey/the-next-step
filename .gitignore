@@ -64,3 +64,4 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+web/.env
