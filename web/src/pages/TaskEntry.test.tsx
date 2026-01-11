@@ -33,14 +33,18 @@ describe('TaskEntry Page', () => {
       status: 200,
       statusText: 'OK',
       headers: {},
-      config: {} as any,
+      config: {
+        headers: {},
+      } as never,
     })
     vi.mocked(apiClient.taskApi.list).mockResolvedValue({ 
       data: [],
       status: 200,
       statusText: 'OK',
       headers: {},
-      config: {} as any,
+      config: {
+        headers: {},
+      } as never,
     })
   })
 
