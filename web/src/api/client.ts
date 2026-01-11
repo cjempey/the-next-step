@@ -1,6 +1,7 @@
 // API client for communicating with backend
 import axios from 'axios'
 import type { Value, ValueCreate, ValueUpdate } from '../types/value'
+import type { Task, TaskCreate } from '../types/task'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
@@ -38,10 +39,10 @@ apiClient.interceptors.request.use((config) => {
 
 // Task endpoints
 export const taskApi = {
-  list: () => apiClient.get('/tasks'),
-  create: (data: unknown) => apiClient.post('/tasks', data),
-  get: (id: number) => apiClient.get(`/tasks/${id}`),
-  update: (id: number, data: unknown) => apiClient.put(`/tasks/${id}`, data),
+  list: () => apiClient.get<Task[]>('/tasks'),
+  create: (data: TaskCreate) => apiClient.post<Task>('/tasks', data),
+  get: (id: number) => apiClient.get<Task>(`/tasks/${id}`),
+  update: (id: number, data: unknown) => apiClient.put<Task>(`/tasks/${id}`, data),
   delete: (id: number) => apiClient.delete(`/tasks/${id}`),
 }
 

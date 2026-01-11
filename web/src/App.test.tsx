@@ -1,8 +1,42 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import App from './App'
+import * as apiClient from './api/client'
+
+// Mock the API client for TaskEntry page
+vi.mock('./api/client', () => ({
+  taskApi: {
+    list: vi.fn(),
+    create: vi.fn(),
+  },
+  valueApi: {
+    list: vi.fn(),
+  },
+}))
 
 describe('App', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // Setup default mocks
+    vi.mocked(apiClient.valueApi.list).mockResolvedValue({ 
+      data: [],
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {
+        headers: {},
+      } as never,
+    })
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue({ 
+      data: [],
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {
+        headers: {},
+      } as never,
+    })
+  })
   it('renders without crashing', () => {
     render(<App />)
     // Check that the app title is rendered
@@ -53,6 +87,19 @@ describe('App', () => {
       })
     })
 
+    it('navigates to New Task page', async () => {
+      render(<App />)
+      
+      const newTaskLinks = screen.getAllByText('New Task')
+      fireEvent.click(newTaskLinks[0])
+      
+      await waitFor(() => {
+        const headings = screen.getAllByText('New Task')
+        // Should have the link and the page heading
+        expect(headings.length).toBeGreaterThan(1)
+      })
+    })
+
     it('navigates back to Tasks page', async () => {
       render(<App />)
       
@@ -79,6 +126,7 @@ describe('App', () => {
       render(<App />)
       
       expect(screen.getAllByText('Tasks').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('New Task').length).toBeGreaterThan(0)
       expect(screen.getAllByText('Values').length).toBeGreaterThan(0)
       expect(screen.getAllByText('Morning Planning').length).toBeGreaterThan(0)
       expect(screen.getAllByText('Evening Review').length).toBeGreaterThan(0)
