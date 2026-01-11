@@ -2,13 +2,16 @@
 Task suggestion endpoints.
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
-from app.schemas import SuggestionRequest, SuggestionResponse
-from app.models import User
 from app.auth import get_current_active_user
+from app.config import settings
+from app.core.database import get_db
+from app.models import Task, TaskStateEnum, User
+from app.schemas import SuggestionRequest, SuggestionResponse, TaskResponse
+from app.services.scoring.registry import get_strategy_registry
+from app.services.scoring.service import TaskScoringService
 
 router = APIRouter()
 
@@ -19,10 +22,107 @@ async def get_next_suggestion(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Get the next task suggestion using fuzzy weighting algorithm."""
-    # TODO: Implement scoring algorithm and stochastic selection
-    # Filter by current_user.id
-    pass
+    """Get the next task suggestion using fuzzy weighting algorithm.
+
+    Uses stochastic selection with weighted probabilities based on
+    task impact, urgency, strategic nudge, rejection dampening, and
+    daily priorities.
+
+    Args:
+        request: Suggestion request (optionally include in-progress tasks)
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        SuggestionResponse with selected task and reason
+
+    Raises:
+        HTTPException: 404 if no tasks available
+    """
+    # Query Ready tasks (optionally include In Progress)
+    query = db.query(Task).filter(
+        Task.user_id == current_user.id,
+        Task.state == TaskStateEnum.READY,
+    )
+
+    if request.include_in_progress:
+        query = db.query(Task).filter(
+            Task.user_id == current_user.id,
+            Task.state.in_([TaskStateEnum.READY, TaskStateEnum.IN_PROGRESS]),
+        )
+
+    tasks = query.all()
+
+    if not tasks:
+        raise HTTPException(status_code=404, detail="No tasks available")
+
+    # Get strategy and scoring service
+    registry = get_strategy_registry()
+    strategy = registry.get_default()  # Future: allow user to specify strategy
+    service = TaskScoringService(strategy, settings.SCORING_CONFIG)
+
+    # Select stochastically
+    selected_task, reason = service.select_stochastic(tasks, current_user.id, db)
+
+    # Return suggestion
+    return SuggestionResponse(
+        task=TaskResponse.model_validate(selected_task), reason=reason
+    )
+
+
+@router.get("/strategies")
+async def list_scoring_strategies():
+    """List available scoring strategies (for future user selection).
+
+    Returns:
+        Dictionary with list of available strategies
+    """
+    registry = get_strategy_registry()
+    return {"strategies": registry.list_strategies()}
+
+
+@router.get("/planning/ranked-tasks")
+async def get_ranked_tasks(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get all Ready tasks ranked by weighted score for morning planning.
+
+    Provides deterministic ranking showing which tasks have highest scores,
+    with transparency about scoring factors.
+
+    Args:
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        Dictionary with ranked list of tasks, scores, and reasons
+    """
+    tasks = (
+        db.query(Task)
+        .filter(
+            Task.user_id == current_user.id,
+            Task.state == TaskStateEnum.READY,
+        )
+        .all()
+    )
+
+    registry = get_strategy_registry()
+    strategy = registry.get_default()
+    service = TaskScoringService(strategy, settings.SCORING_CONFIG)
+
+    ranked = service.rank_tasks(tasks, current_user.id, db)
+
+    return {
+        "tasks": [
+            {
+                "task": TaskResponse.model_validate(task),
+                "score": score,
+                "reason": reason,
+            }
+            for task, score, reason in ranked
+        ]
+    }
 
 
 @router.post("/suggest-impact")
