@@ -39,6 +39,35 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4"
 
+    # Scoring Algorithm Configuration
+    SCORING_STRATEGY: str = "additive_weighted"  # Default strategy
+    SCORING_IMPACT_WEIGHT: float = 2.0
+    SCORING_URGENCY_WEIGHT: float = 1.5
+    SCORING_STRATEGIC_NUDGE_BOOST: float = 1.5
+    SCORING_DAMPENING_FACTOR: float = 0.5
+    SCORING_PRIORITY_MULTIPLIER: float = 2.0
+
+    # Value mappings (impact and urgency to numeric values)
+    SCORING_IMPACT_VALUES: dict[str, int] = {"A": 4, "B": 3, "C": 2, "D": 1}
+    SCORING_URGENCY_VALUES: dict[int, int] = {1: 4, 2: 3, 3: 2, 4: 1}
+
+    @property
+    def SCORING_CONFIG(self) -> dict:
+        """Combined scoring configuration.
+
+        Returns:
+            Dictionary with all scoring parameters for strategy use
+        """
+        return {
+            "impact_weight": self.SCORING_IMPACT_WEIGHT,
+            "urgency_weight": self.SCORING_URGENCY_WEIGHT,
+            "strategic_nudge_boost": self.SCORING_STRATEGIC_NUDGE_BOOST,
+            "dampening_factor": self.SCORING_DAMPENING_FACTOR,
+            "priority_multiplier": self.SCORING_PRIORITY_MULTIPLIER,
+            "impact_values": self.SCORING_IMPACT_VALUES,
+            "urgency_values": self.SCORING_URGENCY_VALUES,
+        }
+
     class Config:
         env_file = ".env"
         case_sensitive = True
