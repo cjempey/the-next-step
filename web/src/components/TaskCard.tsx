@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Task } from '../types/task'
 import { taskApi } from '../api/client'
 import { getErrorMessage } from '../utils/errors'
@@ -42,6 +42,11 @@ export function TaskCard({ task, onTaskUpdate, onNextInstanceCreated }: TaskCard
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showConfirmDialog, setShowConfirmDialog] = useState<Task['state'] | null>(null)
+
+  // Sync local state when task prop changes
+  useEffect(() => {
+    setCurrentTask(task)
+  }, [task])
 
   const transitions = stateTransitions[currentTask.state] || []
   const isFinalState = currentTask.state === 'Completed' || currentTask.state === 'Cancelled'
@@ -297,7 +302,7 @@ function getStateColor(state: Task['state']): string {
     case 'Blocked':
       return '#dc3545' // Red
     case 'Parked':
-      return '#ffc107' // Yellow/Orange
+      return '#ff9800' // Amber (better contrast with white text for accessibility)
     case 'Completed':
       return '#6c757d' // Gray
     case 'Cancelled':

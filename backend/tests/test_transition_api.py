@@ -395,3 +395,27 @@ class TestTransitionScenarios:
             )
             assert response.status_code == 200
             assert response.json()["task"]["state"] == "Cancelled"
+
+    def test_transition_cannot_access_other_users_task(self):
+        """Test that users cannot transition tasks belonging to other users."""
+        db = TestingSessionLocal()
+        # Create first user and their task
+        user1 = create_test_user(db, username="user1", email="user1@example.com")
+        task = create_test_task(db, user1.id, TaskStateEnum.READY)
+        task_id = task.id
+        db.close()
+
+        # Switch to second user (this modifies the global _test_user_data for auth)
+        db = TestingSessionLocal()
+        create_test_user(db, username="user2", email="user2@example.com")
+        db.close()
+
+        # Attempt to transition user1's task as user2
+        response = client.post(
+            f"/api/tasks/{task_id}/transition",
+            json={"new_state": "In Progress"},
+        )
+
+        # Should return 404 (not found) since the task doesn't belong to user2
+        assert response.status_code == 404
+        assert "not found" in response.json()["detail"].lower()

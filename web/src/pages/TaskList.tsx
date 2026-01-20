@@ -14,6 +14,21 @@ export default function TaskList() {
     loadTasks()
   }, [])
 
+  // Cleanup timeout on unmount to prevent memory leak
+  useEffect(() => {
+    let notificationTimeout: ReturnType<typeof setTimeout> | null = null
+    
+    if (notification) {
+      notificationTimeout = setTimeout(() => setNotification(null), 5000)
+    }
+    
+    return () => {
+      if (notificationTimeout) {
+        clearTimeout(notificationTimeout)
+      }
+    }
+  }, [notification])
+
   const loadTasks = async () => {
     try {
       setLoading(true)
@@ -38,8 +53,7 @@ export default function TaskList() {
     setTasks(prevTasks => [newTask, ...prevTasks])
     // Show a brief inline notification
     setNotification(`Next instance of recurring task created: ${newTask.title}`)
-    // Auto-dismiss after 5 seconds
-    setTimeout(() => setNotification(null), 5000)
+    // Timeout cleanup is handled by useEffect
   }
 
   if (loading) {

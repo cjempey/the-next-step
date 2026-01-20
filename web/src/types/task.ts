@@ -13,6 +13,7 @@ export interface Task {
   notes: string | null
   created_at: string  // ISO 8601 timestamp
   updated_at: string  // ISO 8601 timestamp
+  completed_at: string | null  // ISO 8601 timestamp, set when state becomes Completed
 }
 
 export interface TaskCreate {
