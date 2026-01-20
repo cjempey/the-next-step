@@ -412,10 +412,14 @@ class TestRejectSuggestion:
         assert data["task_id"] == task.id
 
         # Verify dampening record was created
-        dampening = db.query(RejectionDampening).filter(
-            RejectionDampening.user_id == test_user.id,
-            RejectionDampening.task_id == task.id,
-        ).first()
+        dampening = (
+            db.query(RejectionDampening)
+            .filter(
+                RejectionDampening.user_id == test_user.id,
+                RejectionDampening.task_id == task.id,
+            )
+            .first()
+        )
         assert dampening is not None
         assert dampening.expires_at == "next_break"
 
@@ -441,10 +445,14 @@ class TestRejectSuggestion:
         assert response2.status_code == 200
 
         # Verify only one dampening record exists
-        count = db.query(RejectionDampening).filter(
-            RejectionDampening.user_id == test_user.id,
-            RejectionDampening.task_id == task.id,
-        ).count()
+        count = (
+            db.query(RejectionDampening)
+            .filter(
+                RejectionDampening.user_id == test_user.id,
+                RejectionDampening.task_id == task.id,
+            )
+            .count()
+        )
         assert count == 1
 
     def test_reject_suggestion_nonexistent_task(self, db, test_user):
@@ -536,9 +544,11 @@ class TestTakeBreak:
         assert data["cleared_count"] == 2
 
         # Verify all dampening records are deleted
-        count = db.query(RejectionDampening).filter(
-            RejectionDampening.user_id == test_user.id
-        ).count()
+        count = (
+            db.query(RejectionDampening)
+            .filter(RejectionDampening.user_id == test_user.id)
+            .count()
+        )
         assert count == 0
 
     def test_take_break_no_dampening(self, db, test_user):
@@ -607,11 +617,15 @@ class TestTakeBreak:
         assert data["cleared_count"] == 1
 
         # Verify only test user's dampening is cleared
-        test_count = db.query(RejectionDampening).filter(
-            RejectionDampening.user_id == test_user.id
-        ).count()
-        other_count = db.query(RejectionDampening).filter(
-            RejectionDampening.user_id == other_user.id
-        ).count()
+        test_count = (
+            db.query(RejectionDampening)
+            .filter(RejectionDampening.user_id == test_user.id)
+            .count()
+        )
+        other_count = (
+            db.query(RejectionDampening)
+            .filter(RejectionDampening.user_id == other_user.id)
+            .count()
+        )
         assert test_count == 0
         assert other_count == 1
