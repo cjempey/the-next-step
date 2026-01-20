@@ -11,7 +11,13 @@ from app.auth import get_current_active_user
 from app.config import settings
 from app.core.database import get_db
 from app.models import RejectionDampening, Task, TaskStateEnum, User
-from app.schemas import SuggestionRequest, SuggestionResponse, TaskResponse
+from app.schemas import (
+    BreakResponse,
+    RejectionResponse,
+    SuggestionRequest,
+    SuggestionResponse,
+    TaskResponse,
+)
 from app.services.scoring.registry import get_strategy_registry
 from app.services.scoring.service import TaskScoringService
 
@@ -155,7 +161,7 @@ async def suggest_urgency(
     pass
 
 
-@router.post("/{task_id}/reject")
+@router.post("/{task_id}/reject", response_model=RejectionResponse)
 async def reject_suggestion(
     task_id: int,
     db: Session = Depends(get_db),
@@ -173,7 +179,7 @@ async def reject_suggestion(
         current_user: Authenticated user
 
     Returns:
-        Success message
+        RejectionResponse with success message and task_id
 
     Raises:
         HTTPException: 404 if task not found or doesn't belong to user
@@ -209,10 +215,10 @@ async def reject_suggestion(
         db.add(dampening)
         db.commit()
 
-    return {"message": "Task rejected", "task_id": task_id}
+    return RejectionResponse(message="Task rejected", task_id=task_id)
 
 
-@router.post("/break")
+@router.post("/break", response_model=BreakResponse)
 async def take_break(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -227,7 +233,7 @@ async def take_break(
         current_user: Authenticated user
 
     Returns:
-        Success message with count of cleared records
+        BreakResponse with success message and count of cleared records
     """
     # Delete all rejection dampening records for this user
     deleted_count = (
@@ -238,7 +244,7 @@ async def take_break(
 
     db.commit()
 
-    return {
-        "message": "Break taken, rejection dampening cleared",
-        "cleared_count": deleted_count,
-    }
+    return BreakResponse(
+        message="Break taken, rejection dampening cleared",
+        cleared_count=deleted_count,
+    )
