@@ -4,6 +4,13 @@ import type { AxiosResponse } from 'axios'
 import TaskList from './TaskList'
 import * as apiClient from '../api/client'
 import type { Task } from '../types/task'
+import type { Value } from '../types/value'
+
+// Mock react-router-dom
+const mockNavigate = vi.fn()
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => mockNavigate,
+}))
 
 // Mock the TaskCard component to simplify testing
 vi.mock('../components/TaskCard', () => ({
@@ -26,6 +33,9 @@ vi.mock('../api/client', () => ({
   taskApi: {
     list: vi.fn(),
   },
+  valueApi: {
+    list: vi.fn(),
+  },
 }))
 
 describe('TaskList Page', () => {
@@ -46,8 +56,18 @@ describe('TaskList Page', () => {
     completed_at: null,
   }
 
+  const mockValue: Value = {
+    id: 1,
+    statement: 'Test Value',
+    archived: false,
+    created_at: '2026-01-20T00:00:00Z',
+    archived_at: null,
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
+    // Default mock for valueApi.list to return empty array
+    vi.mocked(apiClient.valueApi.list).mockResolvedValue(mockAxiosResponse([]))
   })
 
   const mockAxiosResponse = <T,>(data: T): AxiosResponse<T> => ({
@@ -94,7 +114,7 @@ describe('TaskList Page', () => {
     render(<TaskList />)
     
     await waitFor(() => {
-      expect(screen.getByText(/No tasks yet/i)).toBeInTheDocument()
+      expect(screen.getByText(/No tasks found with the selected filters/i)).toBeInTheDocument()
     })
   })
 
@@ -151,7 +171,7 @@ describe('TaskList Page', () => {
     render(<TaskList />)
     
     await waitFor(() => {
-      expect(screen.getByText('Ready')).toBeInTheDocument()
+      expect(screen.getByTestId('task-card-1')).toBeInTheDocument()
     })
 
     // Simulate task update
@@ -159,7 +179,9 @@ describe('TaskList Page', () => {
     fireEvent.click(updateButton)
 
     await waitFor(() => {
-      expect(screen.getByText('Completed')).toBeInTheDocument()
+      // Check that Completed appears in the task card (not in filter)
+      const taskCard = screen.getByTestId('task-card-1')
+      expect(taskCard).toHaveTextContent('Completed')
     })
   })
 
@@ -205,6 +227,112 @@ describe('TaskList Page', () => {
       expect(taskCardsAfter).toHaveLength(3)
       // New task should be first in the list
       expect(taskCardsAfter[0]).toHaveAttribute('data-testid', 'task-card-999')
+    })
+  })
+
+  it('displays Create Task button', async () => {
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([]))
+    
+    render(<TaskList />)
+    
+    await waitFor(() => {
+      expect(screen.getByText('+ Create Task')).toBeInTheDocument()
+    })
+  })
+
+  it('navigates to task creation page when Create Task button is clicked', async () => {
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([]))
+    
+    render(<TaskList />)
+    
+    await waitFor(() => {
+      expect(screen.getByText('+ Create Task')).toBeInTheDocument()
+    })
+
+    const createButton = screen.getByText('+ Create Task')
+    fireEvent.click(createButton)
+
+    expect(mockNavigate).toHaveBeenCalledWith('/tasks/new')
+  })
+
+  it('displays state filter checkboxes', async () => {
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([]))
+    
+    render(<TaskList />)
+    
+    await waitFor(() => {
+      expect(screen.getByText('Task State')).toBeInTheDocument()
+      expect(screen.getByLabelText(/Ready/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/In Progress/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/Completed/i)).toBeInTheDocument()
+    })
+  })
+
+  it('filters tasks by state when checkbox is clicked', async () => {
+    const readyTask = mockTask
+    const completedTask = { ...mockTask, id: 2, state: 'Completed' as Task['state'], title: 'Completed Task' }
+    
+    // Initial load with Ready filter
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([readyTask]))
+    
+    render(<TaskList />)
+    
+    await waitFor(() => {
+      expect(screen.getByTestId('task-card-1')).toBeInTheDocument()
+    })
+
+    // Check the Completed checkbox
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([completedTask]))
+    const completedCheckbox = screen.getByLabelText(/Completed/i)
+    fireEvent.click(completedCheckbox)
+
+    await waitFor(() => {
+      // Should now show both tasks (Ready and Completed)
+      expect(apiClient.taskApi.list).toHaveBeenCalledWith({ state: 'Ready' })
+      expect(apiClient.taskApi.list).toHaveBeenCalledWith({ state: 'Completed' })
+    })
+  })
+
+  it('displays value filter when values exist', async () => {
+    vi.mocked(apiClient.valueApi.list).mockResolvedValue(mockAxiosResponse([mockValue]))
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([]))
+    
+    render(<TaskList />)
+    
+    await waitFor(() => {
+      expect(screen.getByText('Filter by Value')).toBeInTheDocument()
+      expect(screen.getByLabelText(/Test Value/i)).toBeInTheDocument()
+    })
+  })
+
+  it('displays value pills for tasks with linked values', async () => {
+    const taskWithValue = { ...mockTask, value_ids: [1] }
+    vi.mocked(apiClient.valueApi.list).mockResolvedValue(mockAxiosResponse([mockValue]))
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([taskWithValue]))
+    
+    render(<TaskList />)
+    
+    await waitFor(() => {
+      // Look for value pill (with smaller font size), not the filter checkbox
+      const valuePills = screen.getAllByText('Test Value')
+      expect(valuePills.length).toBeGreaterThanOrEqual(1)
+      // Verify at least one is a pill (with the specific styling)
+      const pill = valuePills.find(el => 
+        el.tagName === 'SPAN' && 
+        el.style.fontSize === '0.8rem'
+      )
+      expect(pill).toBeInTheDocument()
+    })
+  })
+
+  it('displays task count', async () => {
+    const tasks = [mockTask, { ...mockTask, id: 2, title: 'Task 2' }]
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse(tasks))
+    
+    render(<TaskList />)
+    
+    await waitFor(() => {
+      expect(screen.getByText('Showing 2 tasks')).toBeInTheDocument()
     })
   })
 })
