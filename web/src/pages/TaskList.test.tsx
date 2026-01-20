@@ -4,6 +4,13 @@ import type { AxiosResponse } from 'axios'
 import TaskList from './TaskList'
 import * as apiClient from '../api/client'
 import type { Task } from '../types/task'
+import type { Value } from '../types/value'
+
+// Mock react-router-dom
+const mockNavigate = vi.fn()
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => mockNavigate,
+}))
 
 // Mock the TaskCard component to simplify testing
 vi.mock('../components/TaskCard', () => ({
@@ -26,6 +33,9 @@ vi.mock('../api/client', () => ({
   taskApi: {
     list: vi.fn(),
   },
+  valueApi: {
+    list: vi.fn(),
+  },
 }))
 
 describe('TaskList Page', () => {
@@ -46,8 +56,18 @@ describe('TaskList Page', () => {
     completed_at: null,
   }
 
+  const mockValue: Value = {
+    id: 1,
+    statement: 'Test Value',
+    archived: false,
+    created_at: '2026-01-20T00:00:00Z',
+    archived_at: null,
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
+    // Default mock for valueApi.list to return empty array
+    vi.mocked(apiClient.valueApi.list).mockResolvedValue(mockAxiosResponse([]))
   })
 
   const mockAxiosResponse = <T,>(data: T): AxiosResponse<T> => ({
@@ -94,7 +114,7 @@ describe('TaskList Page', () => {
     render(<TaskList />)
     
     await waitFor(() => {
-      expect(screen.getByText(/No tasks yet/i)).toBeInTheDocument()
+      expect(screen.getByText(/No tasks found with the selected filters/i)).toBeInTheDocument()
     })
   })
 
@@ -151,7 +171,7 @@ describe('TaskList Page', () => {
     render(<TaskList />)
     
     await waitFor(() => {
-      expect(screen.getByText('Ready')).toBeInTheDocument()
+      expect(screen.getByTestId('task-card-1')).toBeInTheDocument()
     })
 
     // Simulate task update
@@ -159,7 +179,9 @@ describe('TaskList Page', () => {
     fireEvent.click(updateButton)
 
     await waitFor(() => {
-      expect(screen.getByText('Completed')).toBeInTheDocument()
+      // Check that Completed appears in the task card (not in filter)
+      const taskCard = screen.getByTestId('task-card-1')
+      expect(taskCard).toHaveTextContent('Completed')
     })
   })
 
@@ -205,6 +227,238 @@ describe('TaskList Page', () => {
       expect(taskCardsAfter).toHaveLength(3)
       // New task should be first in the list
       expect(taskCardsAfter[0]).toHaveAttribute('data-testid', 'task-card-999')
+    })
+  })
+
+  it('displays Create Task button', async () => {
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([]))
+    
+    render(<TaskList />)
+    
+    await waitFor(() => {
+      expect(screen.getByText('+ Create Task')).toBeInTheDocument()
+    })
+  })
+
+  it('navigates to task creation page when Create Task button is clicked', async () => {
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([]))
+    
+    render(<TaskList />)
+    
+    await waitFor(() => {
+      expect(screen.getByText('+ Create Task')).toBeInTheDocument()
+    })
+
+    const createButton = screen.getByText('+ Create Task')
+    fireEvent.click(createButton)
+
+    expect(mockNavigate).toHaveBeenCalledWith('/tasks/new')
+  })
+
+  it('displays state filter checkboxes', async () => {
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([]))
+    
+    render(<TaskList />)
+    
+    await waitFor(() => {
+      expect(screen.getByText('Task State')).toBeInTheDocument()
+      expect(screen.getByLabelText(/Ready/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/In Progress/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/Completed/i)).toBeInTheDocument()
+    })
+  })
+
+  it('filters tasks by state when checkbox is clicked', async () => {
+    const readyTask = mockTask
+    const completedTask = { ...mockTask, id: 2, state: 'Completed' as Task['state'], title: 'Completed Task' }
+    
+    // Initial load with Ready filter
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([readyTask]))
+    
+    render(<TaskList />)
+    
+    await waitFor(() => {
+      expect(screen.getByTestId('task-card-1')).toBeInTheDocument()
+    })
+
+    // Check the Completed checkbox
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([completedTask]))
+    const completedCheckbox = screen.getByLabelText(/Completed/i)
+    fireEvent.click(completedCheckbox)
+
+    await waitFor(() => {
+      // Should now show both tasks (Ready and Completed)
+      expect(apiClient.taskApi.list).toHaveBeenCalledWith({ state: 'Ready' })
+      expect(apiClient.taskApi.list).toHaveBeenCalledWith({ state: 'Completed' })
+    })
+  })
+
+  it('displays value filter when values exist', async () => {
+    vi.mocked(apiClient.valueApi.list).mockResolvedValue(mockAxiosResponse([mockValue]))
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([]))
+    
+    render(<TaskList />)
+    
+    await waitFor(() => {
+      expect(screen.getByText('Filter by Value')).toBeInTheDocument()
+      expect(screen.getByLabelText(/Test Value/i)).toBeInTheDocument()
+    })
+  })
+
+  it('displays value pills for tasks with linked values', async () => {
+    const taskWithValue = { ...mockTask, value_ids: [1] }
+    vi.mocked(apiClient.valueApi.list).mockResolvedValue(mockAxiosResponse([mockValue]))
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([taskWithValue]))
+    
+    render(<TaskList />)
+    
+    await waitFor(() => {
+      // Look for value pill (with smaller font size), not the filter checkbox
+      const valuePills = screen.getAllByText('Test Value')
+      expect(valuePills.length).toBeGreaterThanOrEqual(1)
+      // Verify at least one is a pill (with the specific styling)
+      const pill = valuePills.find(el => 
+        el.tagName === 'SPAN' && 
+        el.style.fontSize === '0.8rem'
+      )
+      expect(pill).toBeInTheDocument()
+    })
+  })
+
+  it('displays task count', async () => {
+    const tasks = [mockTask, { ...mockTask, id: 2, title: 'Task 2' }]
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse(tasks))
+    
+    render(<TaskList />)
+    
+    await waitFor(() => {
+      expect(screen.getByText('Showing 2 tasks')).toBeInTheDocument()
+    })
+  })
+
+  it('filters tasks by value when value checkbox is clicked', async () => {
+    const taskWithValue1 = { ...mockTask, value_ids: [1] }
+    const taskWithValue2 = { ...mockTask, id: 2, title: 'Task 2', value_ids: [2] }
+    const value2: Value = { ...mockValue, id: 2, statement: 'Value 2' }
+    
+    vi.mocked(apiClient.valueApi.list).mockResolvedValue(mockAxiosResponse([mockValue, value2]))
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([taskWithValue1, taskWithValue2]))
+    
+    render(<TaskList />)
+    
+    await waitFor(() => {
+      expect(screen.getByTestId('task-card-1')).toBeInTheDocument()
+      expect(screen.getByTestId('task-card-2')).toBeInTheDocument()
+    })
+
+    // Click on value filter for "Test Value" (value_id: 1)
+    const valueCheckbox = screen.getByLabelText(/Test Value/i)
+    fireEvent.click(valueCheckbox)
+
+    await waitFor(() => {
+      // Should only show task 1 now (has value_id 1)
+      expect(screen.getByTestId('task-card-1')).toBeInTheDocument()
+      expect(screen.queryByTestId('task-card-2')).not.toBeInTheDocument()
+    })
+  })
+
+  it('handles multiple value filters correctly (client-side filtering)', async () => {
+    // Test that client-side value filtering works when multiple values are selected
+    const task1 = { ...mockTask, id: 101, title: 'Has Value 1', value_ids: [1], completed_at: null }
+    const task2 = { ...mockTask, id: 102, title: 'Has Value 2', value_ids: [2], completed_at: null }
+    const value2: Value = { ...mockValue, id: 2, statement: 'Value 2' }
+    
+    vi.mocked(apiClient.valueApi.list).mockResolvedValue(mockAxiosResponse([mockValue, value2]))
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(
+      mockAxiosResponse([task1, task2])
+    )
+    
+    render(<TaskList />)
+    
+    // Wait for tasks to load (no value filters, so both show)
+    await waitFor(() => {
+      expect(screen.getByText('Has Value 1')).toBeInTheDocument()
+      expect(screen.getByText('Has Value 2')).toBeInTheDocument()
+    })
+
+    // Select first value filter - should show only task 1
+    const value1Checkbox = screen.getByLabelText(/Test Value/i)
+    fireEvent.click(value1Checkbox)
+
+    await waitFor(() => {
+      expect(screen.getByText('Has Value 1')).toBeInTheDocument()
+      expect(screen.queryByText('Has Value 2')).not.toBeInTheDocument()
+    })
+
+    // Select second value filter - should show both tasks (OR logic)
+    const value2Checkbox = screen.getByLabelText(/Value 2/i)
+    fireEvent.click(value2Checkbox)
+
+    await waitFor(() => {
+      expect(screen.getByText('Has Value 1')).toBeInTheDocument()
+      expect(screen.getByText('Has Value 2')).toBeInTheDocument()
+    })
+  })
+
+  it('removes duplicate tasks when fetching multiple states', async () => {
+    // Simulate a scenario where the same task is returned from multiple state queries
+    const duplicateTask = mockTask
+    
+    // First render with Ready filter (default)
+    vi.mocked(apiClient.taskApi.list).mockResolvedValueOnce(mockAxiosResponse([duplicateTask]))
+    
+    render(<TaskList />)
+    
+    await waitFor(() => {
+      expect(screen.getByTestId('task-card-1')).toBeInTheDocument()
+    })
+
+    // When clicking In Progress, it will make 2 API calls: one for Ready, one for In Progress
+    // Both return the same task to simulate a potential duplicate
+    vi.mocked(apiClient.taskApi.list)
+      .mockResolvedValueOnce(mockAxiosResponse([duplicateTask]))  // Ready
+      .mockResolvedValueOnce(mockAxiosResponse([duplicateTask]))  // In Progress
+
+    const inProgressCheckbox = screen.getByLabelText(/In Progress/i)
+    fireEvent.click(inProgressCheckbox)
+
+    await waitFor(() => {
+      // Should only show the task once, not twice (deduplication working)
+      const taskCards = screen.getAllByTestId(/task-card-/)
+      expect(taskCards).toHaveLength(1)
+    })
+  })
+
+  it('shows empty state when all state filters are unchecked', async () => {
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([mockTask]))
+    
+    render(<TaskList />)
+    
+    await waitFor(() => {
+      expect(screen.getByTestId('task-card-1')).toBeInTheDocument()
+    })
+
+    // Uncheck the Ready filter (the only one checked by default)
+    const readyCheckbox = screen.getByLabelText(/Ready/i)
+    fireEvent.click(readyCheckbox)
+
+    await waitFor(() => {
+      // Should show empty state
+      expect(screen.queryByTestId('task-card-1')).not.toBeInTheDocument()
+      expect(screen.getByText(/No tasks found with the selected filters/i)).toBeInTheDocument()
+    })
+  })
+
+  it('shows notification when values fail to load', async () => {
+    const errorMessage = 'Network error'
+    vi.mocked(apiClient.valueApi.list).mockRejectedValue(new Error(errorMessage))
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([]))
+    
+    render(<TaskList />)
+    
+    await waitFor(() => {
+      expect(screen.getByText(/Failed to load values/i)).toBeInTheDocument()
+      expect(screen.getByText(/Value filter may be unavailable/i)).toBeInTheDocument()
     })
   })
 })

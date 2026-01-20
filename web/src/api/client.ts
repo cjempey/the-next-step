@@ -39,7 +39,8 @@ apiClient.interceptors.request.use((config) => {
 
 // Task endpoints
 export const taskApi = {
-  list: () => apiClient.get<Task[]>('/tasks'),
+  list: (params?: { state?: Task['state']; value_id?: number }) => 
+    apiClient.get<Task[]>('/tasks', { params }),
   create: (data: TaskCreate) => apiClient.post<Task>('/tasks', data),
   get: (id: number) => apiClient.get<Task>(`/tasks/${id}`),
   update: (id: number, data: unknown) => apiClient.put<Task>(`/tasks/${id}`, data),
