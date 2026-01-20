@@ -1,12 +1,20 @@
 """Tests for task state machine and transitions."""
 
 import pytest
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.models import Base, Task, User, TaskStateEnum, RecurrenceEnum, ImpactEnum, UrgencyEnum
+from app.models import (
+    Base,
+    Task,
+    User,
+    TaskStateEnum,
+    RecurrenceEnum,
+    ImpactEnum,
+    UrgencyEnum,
+)
 from app.services.state_machine import (
     is_transition_allowed,
     validate_transition,
@@ -36,9 +44,9 @@ def db_session():
     connection = engine.connect()
     transaction = connection.begin()
     session = TestingSessionLocal(bind=connection)
-    
+
     yield session
-    
+
     # Rollback transaction and close connection
     session.close()
     transaction.rollback()
@@ -50,6 +58,7 @@ def test_user(db_session):
     """Create a test user."""
     # Use a UUID to ensure unique users per test
     import uuid
+
     unique_id = str(uuid.uuid4())[:8]
     user = User(
         username=f"testuser_{unique_id}",
@@ -110,14 +119,18 @@ class TestAllowedTransitions:
         assert TaskStateEnum.READY in ALLOWED_TRANSITIONS[TaskStateEnum.BLOCKED]
         assert TaskStateEnum.PARKED in ALLOWED_TRANSITIONS[TaskStateEnum.BLOCKED]
         assert TaskStateEnum.CANCELLED in ALLOWED_TRANSITIONS[TaskStateEnum.BLOCKED]
-        assert TaskStateEnum.IN_PROGRESS not in ALLOWED_TRANSITIONS[TaskStateEnum.BLOCKED]
+        assert (
+            TaskStateEnum.IN_PROGRESS not in ALLOWED_TRANSITIONS[TaskStateEnum.BLOCKED]
+        )
         assert TaskStateEnum.COMPLETED not in ALLOWED_TRANSITIONS[TaskStateEnum.BLOCKED]
 
     def test_parked_allowed_transitions(self):
         """Test allowed transitions from Parked state."""
         assert TaskStateEnum.READY in ALLOWED_TRANSITIONS[TaskStateEnum.PARKED]
         assert TaskStateEnum.CANCELLED in ALLOWED_TRANSITIONS[TaskStateEnum.PARKED]
-        assert TaskStateEnum.IN_PROGRESS not in ALLOWED_TRANSITIONS[TaskStateEnum.PARKED]
+        assert (
+            TaskStateEnum.IN_PROGRESS not in ALLOWED_TRANSITIONS[TaskStateEnum.PARKED]
+        )
         assert TaskStateEnum.BLOCKED not in ALLOWED_TRANSITIONS[TaskStateEnum.PARKED]
         assert TaskStateEnum.COMPLETED not in ALLOWED_TRANSITIONS[TaskStateEnum.PARKED]
 
@@ -135,15 +148,27 @@ class TestTransitionValidation:
 
     def test_is_transition_allowed_valid(self):
         """Test valid transitions are allowed."""
-        assert is_transition_allowed(TaskStateEnum.READY, TaskStateEnum.IN_PROGRESS) is True
-        assert is_transition_allowed(TaskStateEnum.IN_PROGRESS, TaskStateEnum.COMPLETED) is True
+        assert (
+            is_transition_allowed(TaskStateEnum.READY, TaskStateEnum.IN_PROGRESS)
+            is True
+        )
+        assert (
+            is_transition_allowed(TaskStateEnum.IN_PROGRESS, TaskStateEnum.COMPLETED)
+            is True
+        )
         assert is_transition_allowed(TaskStateEnum.BLOCKED, TaskStateEnum.READY) is True
 
     def test_is_transition_allowed_invalid(self):
         """Test invalid transitions are rejected."""
-        assert is_transition_allowed(TaskStateEnum.COMPLETED, TaskStateEnum.READY) is False
-        assert is_transition_allowed(TaskStateEnum.CANCELLED, TaskStateEnum.READY) is False
-        assert is_transition_allowed(TaskStateEnum.READY, TaskStateEnum.COMPLETED) is False
+        assert (
+            is_transition_allowed(TaskStateEnum.COMPLETED, TaskStateEnum.READY) is False
+        )
+        assert (
+            is_transition_allowed(TaskStateEnum.CANCELLED, TaskStateEnum.READY) is False
+        )
+        assert (
+            is_transition_allowed(TaskStateEnum.READY, TaskStateEnum.COMPLETED) is False
+        )
 
     def test_validate_transition_valid(self):
         """Test validate_transition doesn't raise for valid transitions."""
@@ -155,7 +180,7 @@ class TestTransitionValidation:
         """Test validate_transition raises for invalid transitions."""
         with pytest.raises(InvalidStateTransitionError):
             validate_transition(TaskStateEnum.COMPLETED, TaskStateEnum.READY)
-        
+
         with pytest.raises(InvalidStateTransitionError):
             validate_transition(TaskStateEnum.CANCELLED, TaskStateEnum.IN_PROGRESS)
 
@@ -166,9 +191,9 @@ class TestStateTransitions:
     def test_transition_ready_to_in_progress(self, db_session, test_task):
         """Test transitioning from Ready to In Progress."""
         assert test_task.state == TaskStateEnum.READY
-        
+
         transition_task_state(db_session, test_task, TaskStateEnum.IN_PROGRESS)
-        
+
         assert test_task.state == TaskStateEnum.IN_PROGRESS
         assert test_task.completed_at is None
 
@@ -176,11 +201,11 @@ class TestStateTransitions:
         """Test transitioning from In Progress to Completed sets completed_at."""
         test_task.state = TaskStateEnum.IN_PROGRESS
         db_session.commit()
-        
+
         before_transition = datetime.now(timezone.utc)
         transition_task_state(db_session, test_task, TaskStateEnum.COMPLETED)
         after_transition = datetime.now(timezone.utc)
-        
+
         assert test_task.state == TaskStateEnum.COMPLETED
         assert test_task.completed_at is not None
         assert before_transition <= test_task.completed_at <= after_transition
@@ -191,7 +216,7 @@ class TestStateTransitions:
         transition_task_state(
             db_session, test_task, TaskStateEnum.IN_PROGRESS, notes=notes_text
         )
-        
+
         assert test_task.notes == notes_text
 
     def test_transition_with_completion_percentage(self, db_session, test_task):
@@ -199,41 +224,41 @@ class TestStateTransitions:
         transition_task_state(
             db_session, test_task, TaskStateEnum.IN_PROGRESS, completion_percentage=50
         )
-        
+
         assert test_task.completion_percentage == 50
 
     def test_transition_blocked_to_ready(self, db_session, test_task):
         """Test unblocking a task."""
         test_task.state = TaskStateEnum.BLOCKED
         db_session.commit()
-        
+
         transition_task_state(db_session, test_task, TaskStateEnum.READY)
-        
+
         assert test_task.state == TaskStateEnum.READY
 
     def test_transition_parked_to_ready(self, db_session, test_task):
         """Test resuming a parked task."""
         test_task.state = TaskStateEnum.PARKED
         db_session.commit()
-        
+
         transition_task_state(db_session, test_task, TaskStateEnum.READY)
-        
+
         assert test_task.state == TaskStateEnum.READY
 
     def test_transition_in_progress_to_blocked(self, db_session, test_task):
         """Test blocking an in-progress task."""
         test_task.state = TaskStateEnum.IN_PROGRESS
         db_session.commit()
-        
+
         transition_task_state(db_session, test_task, TaskStateEnum.BLOCKED)
-        
+
         assert test_task.state == TaskStateEnum.BLOCKED
 
     def test_transition_invalid_raises_error(self, db_session, test_task):
         """Test invalid transition raises error."""
         test_task.state = TaskStateEnum.COMPLETED
         db_session.commit()
-        
+
         with pytest.raises(InvalidStateTransitionError):
             transition_task_state(db_session, test_task, TaskStateEnum.READY)
 
@@ -244,25 +269,27 @@ class TestRecurringTasks:
     def test_create_recurring_instance_non_recurring(self, db_session, test_task):
         """Test that non-recurring tasks don't create instances."""
         test_task.recurrence = RecurrenceEnum.NONE
-        
+
         next_instance = create_recurring_instance(db_session, test_task)
-        
+
         assert next_instance is None
 
     def test_create_recurring_instance_daily(self, db_session, test_task):
         """Test daily recurring task creates next instance."""
         test_task.recurrence = RecurrenceEnum.DAILY
         test_task.due_date = datetime(2026, 1, 20, 12, 0, 0, tzinfo=timezone.utc)
-        
+
         next_instance = create_recurring_instance(db_session, test_task)
-        
+
         assert next_instance is not None
         assert next_instance.title == test_task.title
         assert next_instance.description == test_task.description
         assert next_instance.state == TaskStateEnum.READY
         assert next_instance.recurrence == RecurrenceEnum.DAILY
         assert next_instance.parent_task_id == test_task.id
-        assert next_instance.due_date == datetime(2026, 1, 21, 12, 0, 0, tzinfo=timezone.utc)
+        assert next_instance.due_date == datetime(
+            2026, 1, 21, 12, 0, 0, tzinfo=timezone.utc
+        )
         assert next_instance.completion_percentage == 0
         assert next_instance.notes is None
 
@@ -270,19 +297,21 @@ class TestRecurringTasks:
         """Test weekly recurring task creates next instance."""
         test_task.recurrence = RecurrenceEnum.WEEKLY
         test_task.due_date = datetime(2026, 1, 20, 12, 0, 0, tzinfo=timezone.utc)
-        
+
         next_instance = create_recurring_instance(db_session, test_task)
-        
+
         assert next_instance is not None
-        assert next_instance.due_date == datetime(2026, 1, 27, 12, 0, 0, tzinfo=timezone.utc)
+        assert next_instance.due_date == datetime(
+            2026, 1, 27, 12, 0, 0, tzinfo=timezone.utc
+        )
 
     def test_create_recurring_instance_no_due_date(self, db_session, test_task):
         """Test recurring task without due date still creates instance."""
         test_task.recurrence = RecurrenceEnum.DAILY
         test_task.due_date = None
-        
+
         next_instance = create_recurring_instance(db_session, test_task)
-        
+
         assert next_instance is not None
         assert next_instance.due_date is None
         assert next_instance.state == TaskStateEnum.READY
@@ -293,11 +322,11 @@ class TestRecurringTasks:
         test_task.recurrence = RecurrenceEnum.DAILY
         test_task.due_date = datetime(2026, 1, 20, 12, 0, 0, tzinfo=timezone.utc)
         db_session.commit()
-        
+
         next_instance = transition_task_state(
             db_session, test_task, TaskStateEnum.COMPLETED
         )
-        
+
         assert next_instance is not None
         assert test_task.state == TaskStateEnum.COMPLETED
         assert next_instance.state == TaskStateEnum.READY
@@ -308,11 +337,11 @@ class TestRecurringTasks:
         test_task.state = TaskStateEnum.IN_PROGRESS
         test_task.recurrence = RecurrenceEnum.NONE
         db_session.commit()
-        
+
         next_instance = transition_task_state(
             db_session, test_task, TaskStateEnum.COMPLETED
         )
-        
+
         assert next_instance is None
         assert test_task.state == TaskStateEnum.COMPLETED
 
@@ -354,9 +383,9 @@ class TestAllValidTransitions:
         )
         db_session.add(task)
         db_session.commit()
-        
+
         transition_task_state(db_session, task, to_state)
-        
+
         assert task.state == to_state
 
 
@@ -401,9 +430,9 @@ class TestAllInvalidTransitions:
         )
         db_session.add(task)
         db_session.commit()
-        
+
         with pytest.raises(InvalidStateTransitionError):
             transition_task_state(db_session, task, to_state)
-        
+
         # State should not have changed
         assert task.state == from_state

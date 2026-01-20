@@ -46,9 +46,7 @@ class InvalidStateTransitionError(Exception):
     pass
 
 
-def is_transition_allowed(
-    from_state: TaskStateEnum, to_state: TaskStateEnum
-) -> bool:
+def is_transition_allowed(from_state: TaskStateEnum, to_state: TaskStateEnum) -> bool:
     """Check if a state transition is allowed.
 
     Args:
@@ -61,9 +59,7 @@ def is_transition_allowed(
     return to_state in ALLOWED_TRANSITIONS.get(from_state, set())
 
 
-def validate_transition(
-    from_state: TaskStateEnum, to_state: TaskStateEnum
-) -> None:
+def validate_transition(from_state: TaskStateEnum, to_state: TaskStateEnum) -> None:
     """Validate a state transition, raising an exception if invalid.
 
     Args:
@@ -79,9 +75,7 @@ def validate_transition(
         )
 
 
-def create_recurring_instance(
-    db: Session, completed_task: Task
-) -> Optional[Task]:
+def create_recurring_instance(db: Session, completed_task: Task) -> Optional[Task]:
     """Create next instance of a recurring task.
 
     Called automatically when a recurring task is completed.

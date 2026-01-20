@@ -111,7 +111,9 @@ def cleanup_database():
     _test_user_data = None
 
 
-def create_test_task(db, user_id, state=TaskStateEnum.READY, recurrence=RecurrenceEnum.NONE):
+def create_test_task(
+    db, user_id, state=TaskStateEnum.READY, recurrence=RecurrenceEnum.NONE
+):
     """Helper to create a test task."""
     task = Task(
         user_id=user_id,
@@ -240,7 +242,9 @@ class TestTransitionEndpoint:
         """Test completing recurring task creates next instance."""
         db = TestingSessionLocal()
         user = create_test_user(db)
-        task = create_test_task(db, user.id, TaskStateEnum.IN_PROGRESS, RecurrenceEnum.DAILY)
+        task = create_test_task(
+            db, user.id, TaskStateEnum.IN_PROGRESS, RecurrenceEnum.DAILY
+        )
         task.due_date = datetime(2026, 1, 20, 12, 0, 0, tzinfo=timezone.utc)
         db.commit()
         task_id = task.id
@@ -253,11 +257,11 @@ class TestTransitionEndpoint:
 
         assert response.status_code == 200
         data = response.json()
-        
+
         # Original task should be completed
         assert data["task"]["state"] == "Completed"
         assert data["task"]["completed_at"] is not None
-        
+
         # Next instance should be created
         assert data["next_instance"] is not None
         assert data["next_instance"]["id"] != task_id
@@ -273,7 +277,9 @@ class TestTransitionEndpoint:
         """Test completing non-recurring task doesn't create instance."""
         db = TestingSessionLocal()
         user = create_test_user(db)
-        task = create_test_task(db, user.id, TaskStateEnum.IN_PROGRESS, RecurrenceEnum.NONE)
+        task = create_test_task(
+            db, user.id, TaskStateEnum.IN_PROGRESS, RecurrenceEnum.NONE
+        )
         db.close()
 
         response = client.post(
@@ -369,7 +375,7 @@ class TestTransitionScenarios:
         """Test cancellation from different states."""
         db = TestingSessionLocal()
         user = create_test_user(db)
-        
+
         # Cancel from Ready
         task1 = create_test_task(db, user.id, TaskStateEnum.READY)
         task1_id = task1.id

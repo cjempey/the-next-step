@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { taskApi } from '../api/client'
 import { TaskCard } from '../components/TaskCard'
 import type { Task } from '../types/task'
@@ -18,8 +18,11 @@ export default function TaskList() {
       setError(null)
       const response = await taskApi.list()
       setTasks(response.data)
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to load tasks')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error && 'response' in err && typeof err.response === 'object' && err.response !== null && 'data' in err.response && typeof err.response.data === 'object' && err.response.data !== null && 'detail' in err.response.data
+        ? String(err.response.data.detail)
+        : 'Failed to load tasks'
+      setError(errorMessage)
       console.error('Error loading tasks:', err)
     } finally {
       setLoading(false)

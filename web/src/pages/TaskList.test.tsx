@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import type { AxiosResponse } from 'axios'
 import TaskList from './TaskList'
 import * as apiClient from '../api/client'
 
@@ -15,8 +16,18 @@ describe('TaskList Page', () => {
     vi.clearAllMocks()
   })
 
+  const mockAxiosResponse = <T,>(data: T): AxiosResponse<T> => ({
+    data,
+    status: 200,
+    statusText: 'OK',
+    headers: {},
+    config: {
+      headers: {},
+    } as AxiosResponse['config'],
+  })
+
   it('renders without errors', async () => {
-    vi.mocked(apiClient.taskApi.list).mockResolvedValue({ data: [] } as any)
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([]))
     
     render(<TaskList />)
     
@@ -26,7 +37,7 @@ describe('TaskList Page', () => {
   })
 
   it('displays the correct heading', async () => {
-    vi.mocked(apiClient.taskApi.list).mockResolvedValue({ data: [] } as any)
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([]))
     
     render(<TaskList />)
     const heading = await screen.findByRole('heading', { level: 1 })
@@ -34,7 +45,7 @@ describe('TaskList Page', () => {
   })
 
   it('displays the placeholder description', async () => {
-    vi.mocked(apiClient.taskApi.list).mockResolvedValue({ data: [] } as any)
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([]))
     
     render(<TaskList />)
     await waitFor(() => {
@@ -43,7 +54,7 @@ describe('TaskList Page', () => {
   })
 
   it('displays no tasks message when list is empty', async () => {
-    vi.mocked(apiClient.taskApi.list).mockResolvedValue({ data: [] } as any)
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue(mockAxiosResponse([]))
     
     render(<TaskList />)
     await waitFor(() => {
