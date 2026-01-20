@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { taskApi, valueApi } from '../api/client'
 import { TaskCard } from '../components/TaskCard'
@@ -28,16 +28,12 @@ export default function TaskList() {
         setValues(response.data)
       } catch (err) {
         console.error('Error loading values:', err)
+        const message = `Failed to load values: ${getErrorMessage(err)}. Value filter may be unavailable.`
+        setNotification(message)
       }
     }
     loadValues()
   }, [])
-
-  // Load tasks when filters change
-  useEffect(() => {
-    loadTasks()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedStates, selectedValueIds])
 
   // Cleanup timeout on unmount to prevent memory leak
   useEffect(() => {
@@ -54,38 +50,34 @@ export default function TaskList() {
     }
   }, [notification])
 
-  const loadTasks = async () => {
+  const loadTasks = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
       
-      // If multiple states are selected, we need to make multiple API calls and merge
-      // Backend only supports single state filter
+      // If no states are selected, show empty list
       if (selectedStates.length === 0) {
         setTasks([])
         setLoading(false)
         return
       }
 
-      const allTasks: Task[] = []
+      // Fetch tasks for all selected states in parallel to avoid sequential latency
+      const requests = selectedStates.map((state) => {
+        // Backend only supports filtering by a single state at a time;
+        // value-based filtering is handled consistently on the client.
+        const params: { state?: Task['state'] } = { state }
+        return taskApi.list(params)
+      })
+
+      const responses = await Promise.all(requests)
+      const allTasks: Task[] = responses.flatMap((response) => response.data)
       
-      for (const state of selectedStates) {
-        // For each selected state, fetch tasks with that state
-        // If value filter is also selected, apply it too
-        const params: { state?: Task['state']; value_id?: number } = { state }
-        if (selectedValueIds.length === 1) {
-          params.value_id = selectedValueIds[0]
-        }
-        
-        const response = await taskApi.list(params)
-        allTasks.push(...response.data)
-      }
-      
-      // If multiple values are selected, filter client-side
+      // If any values are selected, filter client-side
       let filteredTasks = allTasks
-      if (selectedValueIds.length > 1) {
+      if (selectedValueIds.length > 0) {
         filteredTasks = allTasks.filter(task =>
-          selectedValueIds.some(valueId => task.value_ids.includes(valueId))
+          task.value_ids.some(valueId => selectedValueIds.includes(valueId))
         )
       }
       
@@ -101,7 +93,12 @@ export default function TaskList() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedStates, selectedValueIds])
+
+  // Load tasks when filters change
+  useEffect(() => {
+    loadTasks()
+  }, [loadTasks])
 
   const handleTaskUpdate = (updatedTask: Task) => {
     setTasks(prevTasks =>
