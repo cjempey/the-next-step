@@ -7,9 +7,20 @@ from sqlalchemy.orm import Session
 from typing import Optional
 
 from app.core.database import get_db
-from app.schemas import TaskCreate, TaskUpdate, TaskResponse, TaskStateEnum
+from app.schemas import (
+    TaskCreate,
+    TaskUpdate,
+    TaskResponse,
+    TaskStateEnum,
+    TaskTransition,
+    TaskTransitionResponse,
+)
 from app.models import Task, User, Value
 from app.auth import get_current_active_user
+from app.services.state_machine import (
+    transition_task_state,
+    InvalidStateTransitionError,
+)
 
 router = APIRouter()
 
@@ -266,3 +277,85 @@ async def delete_task(
 
     db.delete(task)
     db.commit()
+
+
+@router.post("/{task_id}/transition", response_model=TaskTransitionResponse)
+async def transition_task(
+    task_id: int,
+    transition_data: TaskTransition,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Transition a task to a new state with validation.
+
+    Validates that the transition is allowed per the state machine rules.
+    Automatically creates next instance for recurring tasks when completed.
+    """
+    # Fetch the task
+    task = (
+        db.query(Task)
+        .filter(Task.id == task_id, Task.user_id == current_user.id)
+        .first()
+    )
+
+    if not task:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
+        )
+
+    # Perform the transition
+    try:
+        next_instance = transition_task_state(
+            db=db,
+            task=task,
+            new_state=transition_data.new_state,
+            notes=transition_data.notes,
+            completion_percentage=transition_data.completion_percentage,
+        )
+        db.commit()
+        db.refresh(task)
+        if next_instance:
+            db.refresh(next_instance)
+    except InvalidStateTransitionError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    # Build response
+    task_response = TaskResponse(
+        id=task.id,
+        title=task.title,
+        description=task.description,
+        value_ids=[v.id for v in task.values],
+        impact=task.impact,
+        urgency=task.urgency,
+        state=task.state,
+        due_date=task.due_date,
+        recurrence=task.recurrence,
+        completion_percentage=task.completion_percentage,
+        notes=task.notes,
+        created_at=task.created_at,
+        updated_at=task.updated_at,
+        completed_at=task.completed_at,
+    )
+
+    next_instance_response = None
+    if next_instance:
+        next_instance_response = TaskResponse(
+            id=next_instance.id,
+            title=next_instance.title,
+            description=next_instance.description,
+            value_ids=[v.id for v in next_instance.values],
+            impact=next_instance.impact,
+            urgency=next_instance.urgency,
+            state=next_instance.state,
+            due_date=next_instance.due_date,
+            recurrence=next_instance.recurrence,
+            completion_percentage=next_instance.completion_percentage,
+            notes=next_instance.notes,
+            created_at=next_instance.created_at,
+            updated_at=next_instance.updated_at,
+            completed_at=next_instance.completed_at,
+        )
+
+    return TaskTransitionResponse(
+        task=task_response, next_instance=next_instance_response
+    )

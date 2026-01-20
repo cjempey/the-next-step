@@ -127,6 +127,14 @@ class TaskUpdate(BaseModel):
     notes: Optional[str] = None
 
 
+class TaskTransition(BaseModel):
+    """Task state transition request."""
+
+    new_state: TaskStateEnum
+    notes: Optional[str] = None
+    completion_percentage: Optional[int] = None
+
+
 class TaskResponse(BaseModel):
     """Task response."""
 
@@ -143,9 +151,17 @@ class TaskResponse(BaseModel):
     notes: Optional[str]
     created_at: AwareDatetime
     updated_at: AwareDatetime
+    completed_at: Optional[AwareDatetime] = None
 
     class Config:
         from_attributes = True
+
+
+class TaskTransitionResponse(BaseModel):
+    """Response from task state transition."""
+
+    task: TaskResponse
+    next_instance: Optional[TaskResponse] = None
 
 
 # Value schemas

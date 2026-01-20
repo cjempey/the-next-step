@@ -44,6 +44,8 @@ export const taskApi = {
   get: (id: number) => apiClient.get<Task>(`/tasks/${id}`),
   update: (id: number, data: unknown) => apiClient.put<Task>(`/tasks/${id}`, data),
   delete: (id: number) => apiClient.delete(`/tasks/${id}`),
+  transition: (id: number, data: { new_state: Task['state']; notes?: string; completion_percentage?: number }) =>
+    apiClient.post<{ task: Task; next_instance: Task | null }>(`/tasks/${id}/transition`, data),
 }
 
 // Value endpoints
