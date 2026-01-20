@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Task } from '../types/task'
 import { taskApi } from '../api/client'
+import { getErrorMessage } from '../utils/errors'
 
 interface TaskCardProps {
   task: Task
@@ -76,10 +77,7 @@ export function TaskCard({ task, onTaskUpdate, onNextInstanceCreated }: TaskCard
       setCurrentTask(previousTask)
       
       // Show error message
-      const errorMessage = err instanceof Error && 'response' in err && typeof err.response === 'object' && err.response !== null && 'data' in err.response && typeof err.response.data === 'object' && err.response.data !== null && 'detail' in err.response.data
-        ? String(err.response.data.detail)
-        : 'Failed to update task state'
-      setError(errorMessage)
+      setError(getErrorMessage(err))
       console.error('Error transitioning task:', err)
     } finally {
       setIsProcessing(false)
