@@ -386,3 +386,246 @@ class TestGetRankedTasks:
         tasks = data["tasks"]
         assert len(tasks) == 1
         assert tasks[0]["task"]["title"] == "Ready"
+
+
+class TestRejectSuggestion:
+    """Tests for /api/suggestions/reject endpoint."""
+
+    def test_reject_suggestion_creates_dampening(self, db, test_user):
+        """Test that rejecting a task creates a dampening record."""
+        task = Task(
+            user_id=test_user.id,
+            title="Task to reject",
+            impact=ImpactEnum.B,
+            urgency=UrgencyEnum.SOON,
+            state=TaskStateEnum.READY,
+        )
+        db.add(task)
+        db.commit()
+        db.refresh(task)
+
+        response = client.post(f"/api/suggestions/{task.id}/reject")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["message"] == "Task rejected"
+        assert data["task_id"] == task.id
+
+        # Verify dampening record was created
+        dampening = (
+            db.query(RejectionDampening)
+            .filter(
+                RejectionDampening.user_id == test_user.id,
+                RejectionDampening.task_id == task.id,
+            )
+            .first()
+        )
+        assert dampening is not None
+        assert dampening.expires_at == "next_break"
+
+    def test_reject_suggestion_idempotent(self, db, test_user):
+        """Test that rejecting same task multiple times is idempotent."""
+        task = Task(
+            user_id=test_user.id,
+            title="Task to reject twice",
+            impact=ImpactEnum.B,
+            urgency=UrgencyEnum.SOON,
+            state=TaskStateEnum.READY,
+        )
+        db.add(task)
+        db.commit()
+        db.refresh(task)
+
+        # First rejection
+        response1 = client.post(f"/api/suggestions/{task.id}/reject")
+        assert response1.status_code == 200
+
+        # Second rejection (should not create duplicate)
+        response2 = client.post(f"/api/suggestions/{task.id}/reject")
+        assert response2.status_code == 200
+
+        # Verify only one dampening record exists
+        count = (
+            db.query(RejectionDampening)
+            .filter(
+                RejectionDampening.user_id == test_user.id,
+                RejectionDampening.task_id == task.id,
+            )
+            .count()
+        )
+        assert count == 1
+
+    def test_reject_suggestion_nonexistent_task(self, db, test_user):
+        """Test rejecting a non-existent task returns 404."""
+        response = client.post("/api/suggestions/99999/reject")
+
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Task not found"
+
+    def test_reject_suggestion_other_users_task(self, db, test_user):
+        """Test rejecting another user's task returns 404."""
+        # Create another user
+        other_user = User(
+            username="otheruser",
+            email="other@example.com",
+            password_hash="$2b$12$test",
+            is_active=True,
+        )
+        db.add(other_user)
+        db.commit()
+        db.refresh(other_user)
+
+        # Create task for other user
+        task = Task(
+            user_id=other_user.id,
+            title="Other user's task",
+            impact=ImpactEnum.B,
+            urgency=UrgencyEnum.SOON,
+            state=TaskStateEnum.READY,
+        )
+        db.add(task)
+        db.commit()
+        db.refresh(task)
+
+        # Try to reject as test_user
+        response = client.post(f"/api/suggestions/{task.id}/reject")
+
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Task not found"
+
+
+class TestTakeBreak:
+    """Tests for /api/suggestions/break endpoint."""
+
+    def test_take_break_clears_all_dampening(self, db, test_user):
+        """Test that taking a break clears all rejection dampening."""
+        # Create multiple tasks with dampening
+        task1 = Task(
+            user_id=test_user.id,
+            title="Task 1",
+            impact=ImpactEnum.B,
+            urgency=UrgencyEnum.SOON,
+            state=TaskStateEnum.READY,
+        )
+        task2 = Task(
+            user_id=test_user.id,
+            title="Task 2",
+            impact=ImpactEnum.A,
+            urgency=UrgencyEnum.IMMEDIATE,
+            state=TaskStateEnum.READY,
+        )
+        db.add_all([task1, task2])
+        db.commit()
+        db.refresh(task1)
+        db.refresh(task2)
+
+        # Create dampening records
+        dampening1 = RejectionDampening(
+            user_id=test_user.id,
+            task_id=task1.id,
+            rejected_at=datetime.now(timezone.utc),
+            expires_at="next_break",
+        )
+        dampening2 = RejectionDampening(
+            user_id=test_user.id,
+            task_id=task2.id,
+            rejected_at=datetime.now(timezone.utc),
+            expires_at="next_break",
+        )
+        db.add_all([dampening1, dampening2])
+        db.commit()
+
+        # Take break
+        response = client.post("/api/suggestions/break")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["message"] == "Break taken, rejection dampening cleared"
+        assert data["cleared_count"] == 2
+
+        # Verify all dampening records are deleted
+        count = (
+            db.query(RejectionDampening)
+            .filter(RejectionDampening.user_id == test_user.id)
+            .count()
+        )
+        assert count == 0
+
+    def test_take_break_no_dampening(self, db, test_user):
+        """Test taking a break with no existing dampening."""
+        response = client.post("/api/suggestions/break")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["message"] == "Break taken, rejection dampening cleared"
+        assert data["cleared_count"] == 0
+
+    def test_take_break_only_clears_own_dampening(self, db, test_user):
+        """Test that break only clears current user's dampening."""
+        # Create another user
+        other_user = User(
+            username="otheruser",
+            email="other@example.com",
+            password_hash="$2b$12$test",
+            is_active=True,
+        )
+        db.add(other_user)
+        db.commit()
+        db.refresh(other_user)
+
+        # Create tasks for both users
+        test_task = Task(
+            user_id=test_user.id,
+            title="Test user's task",
+            impact=ImpactEnum.B,
+            urgency=UrgencyEnum.SOON,
+            state=TaskStateEnum.READY,
+        )
+        other_task = Task(
+            user_id=other_user.id,
+            title="Other user's task",
+            impact=ImpactEnum.B,
+            urgency=UrgencyEnum.SOON,
+            state=TaskStateEnum.READY,
+        )
+        db.add_all([test_task, other_task])
+        db.commit()
+        db.refresh(test_task)
+        db.refresh(other_task)
+
+        # Create dampening for both users
+        test_dampening = RejectionDampening(
+            user_id=test_user.id,
+            task_id=test_task.id,
+            rejected_at=datetime.now(timezone.utc),
+            expires_at="next_break",
+        )
+        other_dampening = RejectionDampening(
+            user_id=other_user.id,
+            task_id=other_task.id,
+            rejected_at=datetime.now(timezone.utc),
+            expires_at="next_break",
+        )
+        db.add_all([test_dampening, other_dampening])
+        db.commit()
+
+        # Test user takes break
+        response = client.post("/api/suggestions/break")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["cleared_count"] == 1
+
+        # Verify only test user's dampening is cleared
+        test_count = (
+            db.query(RejectionDampening)
+            .filter(RejectionDampening.user_id == test_user.id)
+            .count()
+        )
+        other_count = (
+            db.query(RejectionDampening)
+            .filter(RejectionDampening.user_id == other_user.id)
+            .count()
+        )
+        assert test_count == 0
+        assert other_count == 1

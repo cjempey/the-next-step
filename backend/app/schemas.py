@@ -202,6 +202,20 @@ class SuggestionResponse(BaseModel):
     reason: str  # Human-readable explanation
 
 
+class RejectionResponse(BaseModel):
+    """Response for task rejection."""
+
+    message: str
+    task_id: int
+
+
+class BreakResponse(BaseModel):
+    """Response for taking a break."""
+
+    message: str
+    cleared_count: int
+
+
 # Review schemas
 class ReviewCardsRequest(BaseModel):
     """Request to generate review cards."""
