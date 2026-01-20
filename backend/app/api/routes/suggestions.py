@@ -2,13 +2,15 @@
 Task suggestion endpoints.
 """
 
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.auth import get_current_active_user
 from app.config import settings
 from app.core.database import get_db
-from app.models import Task, TaskStateEnum, User
+from app.models import RejectionDampening, Task, TaskStateEnum, User
 from app.schemas import SuggestionRequest, SuggestionResponse, TaskResponse
 from app.services.scoring.registry import get_strategy_registry
 from app.services.scoring.service import TaskScoringService
@@ -153,7 +155,7 @@ async def suggest_urgency(
     pass
 
 
-@router.post("/reject")
+@router.post("/{task_id}/reject")
 async def reject_suggestion(
     task_id: int,
     db: Session = Depends(get_db),
@@ -166,7 +168,7 @@ async def reject_suggestion(
     future suggestions until the next break or evening review.
 
     Args:
-        task_id: ID of the task being rejected
+        task_id: ID of the task being rejected (from path)
         db: Database session
         current_user: Authenticated user
 
@@ -176,26 +178,25 @@ async def reject_suggestion(
     Raises:
         HTTPException: 404 if task not found or doesn't belong to user
     """
-    from app.models import RejectionDampening
-    from datetime import datetime, timezone
-
     # Verify task exists and belongs to user
-    task = db.query(Task).filter(
-        Task.id == task_id,
-        Task.user_id == current_user.id
-    ).first()
+    task = (
+        db.query(Task)
+        .filter(Task.id == task_id, Task.user_id == current_user.id)
+        .first()
+    )
 
     if not task:
-        raise HTTPException(
-            status_code=404,
-            detail="Task not found"
-        )
+        raise HTTPException(status_code=404, detail="Task not found")
 
     # Check if dampening already exists for this task
-    existing = db.query(RejectionDampening).filter(
-        RejectionDampening.user_id == current_user.id,
-        RejectionDampening.task_id == task_id
-    ).first()
+    existing = (
+        db.query(RejectionDampening)
+        .filter(
+            RejectionDampening.user_id == current_user.id,
+            RejectionDampening.task_id == task_id,
+        )
+        .first()
+    )
 
     if not existing:
         # Create new dampening record
@@ -203,7 +204,7 @@ async def reject_suggestion(
             user_id=current_user.id,
             task_id=task_id,
             rejected_at=datetime.now(timezone.utc),
-            expires_at="next_break"  # Cleared on break or evening review
+            expires_at="next_break",  # Cleared on break or evening review
         )
         db.add(dampening)
         db.commit()
@@ -228,16 +229,16 @@ async def take_break(
     Returns:
         Success message with count of cleared records
     """
-    from app.models import RejectionDampening
-
     # Delete all rejection dampening records for this user
-    deleted_count = db.query(RejectionDampening).filter(
-        RejectionDampening.user_id == current_user.id
-    ).delete()
+    deleted_count = (
+        db.query(RejectionDampening)
+        .filter(RejectionDampening.user_id == current_user.id)
+        .delete()
+    )
 
     db.commit()
 
     return {
         "message": "Break taken, rejection dampening cleared",
-        "cleared_count": deleted_count
+        "cleared_count": deleted_count,
     }

@@ -404,7 +404,7 @@ class TestRejectSuggestion:
         db.commit()
         db.refresh(task)
 
-        response = client.post(f"/api/suggestions/reject?task_id={task.id}")
+        response = client.post(f"/api/suggestions/{task.id}/reject")
 
         assert response.status_code == 200
         data = response.json()
@@ -433,11 +433,11 @@ class TestRejectSuggestion:
         db.refresh(task)
 
         # First rejection
-        response1 = client.post(f"/api/suggestions/reject?task_id={task.id}")
+        response1 = client.post(f"/api/suggestions/{task.id}/reject")
         assert response1.status_code == 200
 
         # Second rejection (should not create duplicate)
-        response2 = client.post(f"/api/suggestions/reject?task_id={task.id}")
+        response2 = client.post(f"/api/suggestions/{task.id}/reject")
         assert response2.status_code == 200
 
         # Verify only one dampening record exists
@@ -449,7 +449,7 @@ class TestRejectSuggestion:
 
     def test_reject_suggestion_nonexistent_task(self, db, test_user):
         """Test rejecting a non-existent task returns 404."""
-        response = client.post("/api/suggestions/reject?task_id=99999")
+        response = client.post("/api/suggestions/99999/reject")
 
         assert response.status_code == 404
         assert response.json()["detail"] == "Task not found"
@@ -480,7 +480,7 @@ class TestRejectSuggestion:
         db.refresh(task)
 
         # Try to reject as test_user
-        response = client.post(f"/api/suggestions/reject?task_id={task.id}")
+        response = client.post(f"/api/suggestions/{task.id}/reject")
 
         assert response.status_code == 404
         assert response.json()["detail"] == "Task not found"
