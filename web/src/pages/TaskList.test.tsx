@@ -1,26 +1,53 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
 import TaskList from './TaskList'
+import * as apiClient from '../api/client'
+
+// Mock the API client
+vi.mock('../api/client', () => ({
+  taskApi: {
+    list: vi.fn(),
+  },
+}))
 
 describe('TaskList Page', () => {
-  it('renders without errors', () => {
-    render(<TaskList />)
-    expect(screen.getByText('Task List')).toBeInTheDocument()
+  beforeEach(() => {
+    vi.clearAllMocks()
   })
 
-  it('displays the correct heading', () => {
+  it('renders without errors', async () => {
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue({ data: [] } as any)
+    
     render(<TaskList />)
-    const heading = screen.getByRole('heading', { level: 1 })
+    
+    await waitFor(() => {
+      expect(screen.getByText('Task List')).toBeInTheDocument()
+    })
+  })
+
+  it('displays the correct heading', async () => {
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue({ data: [] } as any)
+    
+    render(<TaskList />)
+    const heading = await screen.findByRole('heading', { level: 1 })
     expect(heading).toHaveTextContent('Task List')
   })
 
-  it('displays the placeholder description', () => {
+  it('displays the placeholder description', async () => {
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue({ data: [] } as any)
+    
     render(<TaskList />)
-    expect(screen.getByText(/View and manage your daily tasks/i)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText(/View and manage your daily tasks/i)).toBeInTheDocument()
+    })
   })
 
-  it('displays the coming soon message', () => {
+  it('displays no tasks message when list is empty', async () => {
+    vi.mocked(apiClient.taskApi.list).mockResolvedValue({ data: [] } as any)
+    
     render(<TaskList />)
-    expect(screen.getByText(/Coming soon/i)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText(/No tasks yet/i)).toBeInTheDocument()
+    })
   })
 })
