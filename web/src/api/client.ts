@@ -62,6 +62,8 @@ export const valueApi = {
 // Suggestion endpoints
 export const suggestionApi = {
   getNext: (data: unknown) => apiClient.post('/suggestions/next', data),
+  reject: (taskId: number) => apiClient.post(`/suggestions/${taskId}/reject`),
+  break: () => apiClient.post('/suggestions/break'),
   suggestImpact: (taskTitle: string) =>
     apiClient.post('/suggestions/suggest-impact', { task_title: taskTitle }),
   suggestUrgency: (taskTitle: string) =>
