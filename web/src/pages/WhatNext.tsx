@@ -148,7 +148,10 @@ export default function WhatNext() {
     }
   }
 
-  const getValueNames = (valueIds: number[]): string[] => {
+  const getValueNames = (valueIds: number[] | undefined): string[] => {
+    if (!valueIds || valueIds.length === 0) {
+      return []
+    }
     return valueIds
       .map(id => values.find(v => v.id === id)?.statement)
       .filter((name): name is string => name !== undefined)
