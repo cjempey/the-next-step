@@ -51,7 +51,8 @@ export default function WhatNext() {
       setError(null)
       
       const response = await suggestionApi.getNext({})
-      setCurrentSuggestion(response.data)
+      // Backend returns { task: Task, reason: string }
+      setCurrentSuggestion(response.data.task)
       setFlowState('suggesting')
     } catch (err) {
       const message = getErrorMessage(err)

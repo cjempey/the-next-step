@@ -79,7 +79,7 @@ describe('WhatNext Page', () => {
 
   it('renders without errors when no in-progress tasks and has suggestion', async () => {
     vi.mocked(taskApi.list).mockResolvedValue(mockAxiosResponse([]))
-    vi.mocked(suggestionApi.getNext).mockResolvedValue(mockAxiosResponse(mockTask))
+    vi.mocked(suggestionApi.getNext).mockResolvedValue(mockAxiosResponse({ task: mockTask, reason: 'High impact task' }))
 
     render(<WhatNext />)
     
@@ -116,7 +116,7 @@ describe('WhatNext Page', () => {
 
   it('fetches suggestion when Suggest something else is clicked', async () => {
     vi.mocked(taskApi.list).mockResolvedValue(mockAxiosResponse([mockInProgressTask]))
-    vi.mocked(suggestionApi.getNext).mockResolvedValue(mockAxiosResponse(mockTask))
+    vi.mocked(suggestionApi.getNext).mockResolvedValue(mockAxiosResponse({ task: mockTask, reason: 'High impact task' }))
 
     render(<WhatNext />)
 
@@ -134,7 +134,7 @@ describe('WhatNext Page', () => {
 
   it('displays suggestion with task details', async () => {
     vi.mocked(taskApi.list).mockResolvedValue(mockAxiosResponse([]))
-    vi.mocked(suggestionApi.getNext).mockResolvedValue(mockAxiosResponse(mockTask))
+    vi.mocked(suggestionApi.getNext).mockResolvedValue(mockAxiosResponse({ task: mockTask, reason: 'High impact task' }))
 
     render(<WhatNext />)
 
@@ -151,7 +151,7 @@ describe('WhatNext Page', () => {
 
   it('starts task and navigates when Start is clicked', async () => {
     vi.mocked(taskApi.list).mockResolvedValue(mockAxiosResponse([]))
-    vi.mocked(suggestionApi.getNext).mockResolvedValue(mockAxiosResponse(mockTask))
+    vi.mocked(suggestionApi.getNext).mockResolvedValue(mockAxiosResponse({ task: mockTask, reason: 'High impact task' }))
     vi.mocked(taskApi.update).mockResolvedValue(mockAxiosResponse({ ...mockTask, state: 'In Progress' }))
 
     render(<WhatNext />)
@@ -176,8 +176,8 @@ describe('WhatNext Page', () => {
     const secondTask = { ...mockTask, id: 3, title: 'Second Task' }
     vi.mocked(taskApi.list).mockResolvedValue(mockAxiosResponse([]))
     vi.mocked(suggestionApi.getNext)
-      .mockResolvedValueOnce(mockAxiosResponse(mockTask))
-      .mockResolvedValueOnce(mockAxiosResponse(secondTask))
+      .mockResolvedValueOnce(mockAxiosResponse({ task: mockTask, reason: 'High impact task' }))
+      .mockResolvedValueOnce(mockAxiosResponse({ task: secondTask, reason: 'Another good task' }))
     vi.mocked(suggestionApi.reject).mockResolvedValue(mockAxiosResponse({}))
 
     render(<WhatNext />)
@@ -197,7 +197,7 @@ describe('WhatNext Page', () => {
 
   it('clears rejections and navigates when taking break', async () => {
     vi.mocked(taskApi.list).mockResolvedValue(mockAxiosResponse([]))
-    vi.mocked(suggestionApi.getNext).mockResolvedValue(mockAxiosResponse(mockTask))
+    vi.mocked(suggestionApi.getNext).mockResolvedValue(mockAxiosResponse({ task: mockTask, reason: 'High impact task' }))
     vi.mocked(suggestionApi.break).mockResolvedValue(mockAxiosResponse({}))
 
     render(<WhatNext />)
